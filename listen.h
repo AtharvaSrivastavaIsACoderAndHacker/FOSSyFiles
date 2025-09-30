@@ -26,7 +26,7 @@ Connection peerWhoReceived;
 using namespace std;
 
 
-void listenFinal(){
+void listenFinal(EVP_PKEY* publicKey){
 
     //// start
     string ip = "127.0.0.1";
@@ -62,16 +62,40 @@ void listenFinal(){
         }
         if(connected){
             cout<<"[listen.h] Connected to : "<<inet_ntoa(CLIENT.clientAddr.sin_addr)<<endl;
+
+
+            
+
+            // SEND KEY
+            KnockPacket keypayload{};
+            memset(&keypayload, 0, sizeof(keypayload));
+            strncpy(keypayload.magic, "_____connectionRequestDatagram_____fossyfiles_____", sizeof(keypayload.magic)-1);
+            keypayload.magic[sizeof(keypayload.magic)-1] = '\0';
+            keypayload.publicKey = publicKey;
+
+            sockaddr_in clientAddrForKeyShare{};
+            clientAddrForKeyShare.sin_family = AF_INET;
+            inet_pton(AF_INET, clientIPViaUdp.c_str(), &clientAddrForKeyShare.sin_addr);
+            clientAddrForKeyShare.sin_port = htons(CLIENT.clientAddr.sin_port);
+
+            int bytesSent = send(CLIENT.clientSocket, reinterpret_cast<char*>(&keypayload), sizeof(keypayload), 0);
+
+
+
+
+            
             {
                 lock_guard<mutex> lock(mtx);
                 stopListening = true;
                 decisionReady = true;  // sote hue kumbakaran ki 4th generation ko jagane ke liye
             }
             cv.notify_all();
-            cout<<1<<endl;
             listenerThread.join();
-            cout<<2<<endl;
             break;
+
+
+
+
             // string buffer;
             // getline(cin, buffer);
             // int bytesSent = send(CLIENT.clientSocket, buffer.c_str(), sizeof(buffer) - 1, 0);

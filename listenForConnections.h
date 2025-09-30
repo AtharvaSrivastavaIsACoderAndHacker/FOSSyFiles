@@ -22,6 +22,7 @@ using namespace std;
 struct ConnectionRequest {
     sockaddr_in clientAddr;
     int clientSocket;
+    EVP_PKEY* publicKey;
 };
 struct ServerInfo {
     int serverSocket;
@@ -119,12 +120,16 @@ inline void listenAndAccept(string server_ip, int port){
 
                 // if FOSSyFiles sent this :
                 if (strncmp(pkt->magic, "_____connectionRequestDatagram_____fossyfiles_____", 128) == 0) {
-                    {
+                    {   
+                        
+                        
                         unique_lock<mutex> lock(mtx);
                         clientIPViaUdp = inet_ntoa(clientAddrUdp.sin_addr);
                         clientPortViaUdp = pkt->tcpReturn;
                         cout<<clientIPViaUdp<<" and "<<clientPortViaUdp<<endl;
                         newRequest = true;
+                        CLIENT.publicKey = pkt->publicKey;
+
                     }
                     cout<<buffer<<endl;
                 } 

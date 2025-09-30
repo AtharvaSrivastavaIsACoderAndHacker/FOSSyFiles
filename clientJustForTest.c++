@@ -1,6 +1,7 @@
 #include<iostream>
 #include <atomic>
 #include "connectionInitiator.h"
+#include "RSA_keygen.h"
 
 #ifdef _WIN32
     #include <winsock2.h>
@@ -22,6 +23,8 @@ using namespace std;
 
 int main(int argc, char const *argv[]){
 
+
+    RSAKeyPair KEYS = generateRSAKeyPair();
     
     #ifdef _WIN32
     // Windows needs WSAStartup/WSACleanup
@@ -32,13 +35,12 @@ int main(int argc, char const *argv[]){
     }
     #endif
 
-
     string server_ip;
     cin>>server_ip;
     int port = 12000;
 
 
-    connectTo(server_ip, "127.0.0.1", port, 12001);
+    connectTo(server_ip, "127.0.0.1", port, 12001, KEYS.publicKey);
     cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
 
 
@@ -47,16 +49,17 @@ int main(int argc, char const *argv[]){
 
 
 
-    cout<<"Receiving..."<<endl;
-    while (1){
-        char buffer[1024];
-                int bytesReceived = recv(peerWhoReceived.peerSocket, buffer, sizeof(buffer) - 1, 0);
-                if(bytesReceived > 0){
-                    buffer[bytesReceived] = '\0';
-                    cout << "Received from server: " << buffer << "\n";
-                    cout.flush();
-        }
-    }
+
+    // cout<<"Receiving..."<<endl;
+    // while (1){
+    //     char buffer[1024];
+    //             int bytesReceived = recv(peerWhoReceived.peerSocket, buffer, sizeof(buffer) - 1, 0);
+    //             if(bytesReceived > 0){
+    //                 buffer[bytesReceived] = '\0';
+    //                 cout << "Received from server: " << buffer << "\n";
+    //                 cout.flush();
+    //     }
+    // }
     
     
     #ifdef _WIN32

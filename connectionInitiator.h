@@ -30,7 +30,7 @@ extern atomic<bool> stopFlag;
 
 
 
-void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const string& self_ip){
+void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const string& self_ip, EVP_PKEY* publicKey){
     SOCKET udpSock = socket(AF_INET, SOCK_DGRAM, 0);
     if (udpSock == INVALID_SOCKET) {
         cerr << "UDP socket creation failed\n";
@@ -58,7 +58,8 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const s
     strncpy(pkt.magic, "_____connectionRequestDatagram_____fossyfiles_____", sizeof(pkt.magic)-1);
     pkt.magic[sizeof(pkt.magic)-1] = '\0'; // ensure null termination
     pkt.tcpReturn = tcpReturnPort;
-    cout<<pkt.tcpReturn;
+    pkt.publicKey = publicKey;
+    // cout<<pkt.tcpReturn;
 
     
 
@@ -70,14 +71,14 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const s
         // udpCV.wait(lock, [](){ return startUdp; });
         // }
     // }
-
+    
     closesocket(udpSock);
 }
 
 
 
-void connectTo(const string& server_ip,const string& self_ip, int udpPort, int tcpReturnPort){
-    thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, self_ip);
+void connectTo(const string& server_ip,const string& self_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
+    thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, self_ip, publicKey);
 
     SOCKET listenSock = socket(AF_INET, SOCK_STREAM, 0);
     if (listenSock == INVALID_SOCKET) {
@@ -107,6 +108,40 @@ void connectTo(const string& server_ip,const string& self_ip, int udpPort, int t
         cerr << "[Initiator] -- Return Accept failed: " << WSAGetLastError() << "\n";
     }
 
+
+
+
+
+
+
+    //////// RECEIVE KEY
+    KnockPacket pkt{};
+    size_t totalReceived = 0;
+    char *ptr = reinterpret_cast<char*>(&pkt);
+
+    while (totalReceived < sizeof(KnockPacket)) {
+        int n = recv(tcpSock, ptr + totalReceived, sizeof(KnockPacket) - totalReceived, 0);
+        if (n <= 0) {
+            #ifdef _WIN32
+            std::cerr << "TCP recv failed: " << WSAGetLastError() << "\n";
+            #else
+            perror("TCP recv failed");
+            #endif
+        }
+        totalReceived += n;
+    }
+
+    if (strncmp(pkt.magic, "_____connectionRequestDatagram_____fossyfiles_____", sizeof(pkt.magic)) != 0) {
+        std::cerr << "[Receiver] Invalid knock packet received!\n";
+    }
+    peerWhoReceived.publicKey = pkt.publicKey;
+    /////////// done
+
+
+
+
+
+
     cout << inet_ntoa(serverAddr.sin_addr) << ": Has Agreed to Connect To You Via tcp on port : "
          << ntohs(serverAddr.sin_port) << "\n"
          << "Connected !" << "\n";
@@ -117,18 +152,4 @@ void connectTo(const string& server_ip,const string& self_ip, int udpPort, int t
     stopFlag = true; // stop sending UDP knocks
     knockThread.join();
 
-    // // 3. Now do normal TCP communication
-    // while (true) {
-    //     string message;
-    //     cin >> message;
-    //     int bytesSent = send(tcpSock, message.c_str(), message.size(), 0);
-    //     if (bytesSent == SOCKET_ERROR) {
-    //         cerr << "Send failed: " << WSAGetLastError() << "\n";
-    //     } else {
-    //         cout << "Sent to peer: " << message << "\n";
-    //     }
-    // }
-
-    // closesocket(tcpSock);
-    // closesocket(listenSock);
 }

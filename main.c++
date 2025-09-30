@@ -5,9 +5,10 @@
 // #include <thread>
 // #include <conio.h>
 #include"fragmentEncryptSend.h"
-#include"sendOrReceiveToASocket.h"
 #include "connectionInitiator.h"
 #include "listen.h"
+#include "RSA_keygen.h"
+
 
 // atomic<bool> stopListening(false);
 // mutex mtx;
@@ -31,6 +32,12 @@
 using namespace std;
 
 int main(int argc, char const *argv[]){
+    
+    
+    
+    RSAKeyPair KEYS = generateRSAKeyPair();
+
+
 
     #ifdef _WIN32
     // Windows needs WSAStartup/WSACleanup
@@ -88,12 +95,11 @@ int main(int argc, char const *argv[]){
 
     // std::thread listenFinalThread(listenFinal);
 
+    listenFinal(KEYS.publicKey);
 
-    listenFinal();
-    
-    if (connected){
-        fragmentEncryptAndSendAFile("README.md", CLIENT.clientSocket);
-    }
+    // if (connected){
+        // fragmentEncryptAndSendAFile("README.md", CLIENT.clientSocket, KEYS.privateKey);
+    // }
     
 
 

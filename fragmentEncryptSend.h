@@ -1,4 +1,5 @@
 #include <iostream>
+#include "ENorDECRYPTstring.h"
 #include <fstream>
 #include <filesystem>
 #include <vector>
@@ -53,7 +54,7 @@ std::string write_metadata_chunk(const FileMetadata& metadata, bool is_start) {
     return meta;
 }
 
-void fragmentEncryptAndSendAFile(const std::string& file_path, SOCKET receiverSOCKET, std::size_t chunk_size = 1024) {
+void fragmentEncryptAndSendAFile(const std::string& file_path, SOCKET receiverSOCKET, EVP_PKEY* key, std::size_t chunk_size = 214) {
 
     std::ifstream in(file_path, std::ios::binary | std::ios::ate);
     if (!in) {
@@ -70,7 +71,9 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, SOCKET receiverSO
 
 
     std::string meta = write_metadata_chunk(metadata ,true);
-    send(receiverSOCKET,meta.c_str(), meta.size(),0);
+    // std::string meta = rsaCrypt(key,write_metadata_chunk(metadata ,true), 0);
+    // cout<<rsaCrypt(key,meta, 1)<<endl;
+    // send(receiverSOCKET,meta.c_str(), meta.size(),0);
 
     
     // Loop to fragment
@@ -81,8 +84,9 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, SOCKET receiverSO
             buffer.resize(bytes_read);
 
             std::string finalTransmissionChunkString = std::string(buffer.begin(), buffer.end());
+            // cout<<rsaCrypt(key,finalTransmissionChunkString, 1)<<endl;
 
-            send(receiverSOCKET,finalTransmissionChunkString.c_str(), finalTransmissionChunkString.size()  ,0);
+            // send(receiverSOCKET,finalTransmissionChunkString.c_str(), finalTransmissionChunkString.size()  ,0);
 
     }
     std::cout << "File fragmented into " << total_chunks << " chunks sent to  " << receiverSOCKET << "\n";
