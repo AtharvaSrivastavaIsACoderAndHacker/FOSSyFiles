@@ -1,10 +1,21 @@
 #include<iostream>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <utility>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include "sharedStructs.h"
+
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #pragma comment(lib, "Ws2_32.lib")
+#else
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
 
 using namespace std;
 
@@ -18,25 +29,51 @@ struct ServerInfo {
 };
 
 extern atomic<bool> stopListening;
-
+sockaddr_in connectToInitiator;
 // Shared state
 extern mutex mtx;
 extern condition_variable cv;
 extern bool newRequest;
+extern bool stopTHIS;
 extern bool decisionReady;
 extern bool acceptConnection;
 extern bool connected;
 extern bool asking;
 extern ConnectionRequest pendingRequest;
-extern ConnectionRequest client;
 extern ServerInfo server;
+extern string clientIPViaUdp;
+extern int clientPortViaUdp;
+
+ConnectionRequest CLIENT;
 
 inline void listenAndAccept(string server_ip, int port){
 
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
-        cerr << "WSAStartup failed\n";
-    }
+    
+    int sockfdUdp; 
+    char buffer[1024]; 
+    struct sockaddr_in servaddr, cliaddr;  
+    if ( (sockfdUdp = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
+        perror("socket creation failed"); 
+        exit(EXIT_FAILURE); 
+    } 
+    memset(&servaddr, 0, sizeof(servaddr)); 
+    memset(&cliaddr, 0, sizeof(cliaddr)); 
+    servaddr.sin_family    = AF_INET;  
+    servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str()); 
+    servaddr.sin_port = htons(port);  
+    if ( bind(sockfdUdp, (const struct sockaddr *)&servaddr,  
+            sizeof(servaddr)) < 0 ) 
+    { 
+        perror("bind failed"); 
+        exit(EXIT_FAILURE); 
+    } 
+    char bufferUdp[1024];
+    struct sockaddr_in clientAddrUdp;
+    socklen_t clientAddrLen = sizeof(clientAddrUdp);
+
+
+
+
 
     int sockfd, newsock;
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -53,65 +90,111 @@ inline void listenAndAccept(string server_ip, int port){
     if(eCodeOnListeningForConnection!=0) perror("error in listening !");
     cout<<bindingReturn<<" and "<<eCodeOnListeningForConnection<<endl;
     
-    while (!stopListening.load()) {
-        fd_set readfds;
-        FD_ZERO(&readfds);                  
-        FD_SET(serverSocket, &readfds);         // sets up incoming connections buffer
-        timeval timeout{1,0}; 
 
-        int activity = select(0, &readfds, nullptr, nullptr, &timeout);
-        if (activity > 0 && FD_ISSET(serverSocket, &readfds)) { // 1 connection request pending
-            cout<<"log from listener header, 1 request came from a client !"<<endl;
-            sockaddr_in clientAddr{};
-            int addrlen = sizeof(clientAddr);
-            int clientSocket = accept(serverSocket, (sockaddr*)&clientAddr, &addrlen);
-            // cout<<"from header listener --> clientAddr : "<<inet_ntoa(clientAddr.sin_addr)<<endl;
-            client.clientAddr = clientAddr;
-            client.clientSocket = clientSocket;
-            connected = true;
-            if (clientSocket != INVALID_SOCKET) {
-                cout<<"valid socket --> clientSocket : "<<clientSocket<<endl;
+
+
+
+
+
+
+    while (!stopListening.load()) {
+        #ifdef _WIN32
+        u_long mode = 1;
+        ioctlsocket(sockfdUdp, FIONBIO, &mode); // Non-blocking
+        #else
+        int flags = fcntl(sockfdUdp, F_GETFL, 0);
+        fcntl(sockfdUdp, F_SETFL, flags | O_NONBLOCK);
+        #endif
+
+        int bytesReceivedForIncomingConnections = recvfrom(sockfdUdp, buffer, 1024, 0, (struct sockaddr*)&clientAddrUdp, &clientAddrLen);
+        if (bytesReceivedForIncomingConnections > 0){
+                if (bytesReceivedForIncomingConnections < sizeof(KnockPacket)) {
+                    cout << "Received incomplete packet, ignoring\n";
+                    continue;
+                }
+                KnockPacket* pkt = reinterpret_cast<KnockPacket*>(buffer);
+                // cout<<"Received a Valid FossyDatagram"<<endl;
+                // cout<<pkt->magic<<endl;
+                // cout<<pkt->tcpReturn<<endl;
+
+                // if FOSSyFiles sent this :
+                if (strncmp(pkt->magic, "_____connectionRequestDatagram_____fossyfiles_____", 128) == 0) {
+                    {
+                        unique_lock<mutex> lock(mtx);
+                        clientIPViaUdp = inet_ntoa(clientAddrUdp.sin_addr);
+                        clientPortViaUdp = pkt->tcpReturn;
+                        cout<<clientIPViaUdp<<" and "<<clientPortViaUdp<<endl;
+                        newRequest = true;
+                    }
+                    cout<<buffer<<endl;
+                } 
+        }
+        else{
+            continue;
+
+        }
+        
+
+        if (newRequest){
+            // cout<<"log from listener header, 1 request came from a client !"<<inet_ntoa(clientAddrUdp.sin_addr)<<endl;
+
                 // ask main thread to respond to this
-                {
+                {   
                     unique_lock<mutex> lock(mtx);
-                    pendingRequest.clientAddr = clientAddr;
-                    pendingRequest.clientSocket = clientSocket;
+                    pendingRequest.clientAddr = clientAddrUdp;
                     newRequest = true;
                     asking = true;
-                    cout<<"locked by listener"<<endl;
+                    // cout<<"locked by listener"<<endl;
                     cout.flush();
                 }
                 cv.notify_one(); // notify main thread
-                cout<<acceptConnection<<endl;
+                cout<<"Listener : Waiting for Main --> "<<acceptConnection<<endl;
                 // Wait for main thread's decision
                 {   
                     unique_lock<mutex> lock(mtx);
                     cv.wait(lock, [](){ return decisionReady; });
+                    
                     if (acceptConnection) {
-                        cout << "Connection accepted from " 
-                             << inet_ntoa(clientAddr.sin_addr) << ":" 
-                             << ntohs(clientAddr.sin_port) << "\n";
+                        int ServerSocket = socket(AF_INET, SOCK_STREAM, 0);
+                        // clientIPViaUdp = inet_ntoa(clientAddrUdp.sin_addr);
+                        // clientPortViaUdp = pkt->tcpReturn;
+                        cout<<clientPortViaUdp<<endl;
+                        cout<<clientIPViaUdp<<endl;
+                        
+                        connectToInitiator.sin_family = AF_INET;
+                        connectToInitiator.sin_addr.s_addr = inet_addr(clientIPViaUdp.c_str());
+                        connectToInitiator.sin_port = htons(clientPortViaUdp);
+                        int connectedOrNot = connect(ServerSocket, (struct sockaddr*)&connectToInitiator, sizeof(connectToInitiator));
+                        cout << "Connection accepted from "
+                             << inet_ntoa(connectToInitiator.sin_addr) << " : " 
+                             << ntohs(connectToInitiator.sin_port) << "\n";
                              cout.flush();
                              connected = true;
-                             client.clientAddr = clientAddr;
-                             client.clientSocket = clientSocket;
                              acceptConnection = false;
                              newRequest = false;
                              asking = false;
-                    } else {
+                             CLIENT.clientAddr = connectToInitiator;
+                             CLIENT.clientSocket = ServerSocket;
+                    } 
+                    else {
                         cout << "Connection rejected.\n";
-                        closesocket(clientSocket);
-                        cout.flush();
-                        connected = false;
-                        acceptConnection = false;
                         newRequest = false;
+                        decisionReady = false;
+                        acceptConnection = false;
+                        connected = false;
                         asking = false;
                     }
                 }
-            }
+            
         }
+
+
+
+
     server.serverAddress = serverAddress;
     server.serverSocket = serverSocket;
+    // end of while loop
 }
-WSACleanup();
+
+
 }
