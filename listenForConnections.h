@@ -128,7 +128,16 @@ inline void listenAndAccept(string server_ip, int port){
                         clientPortViaUdp = pkt->tcpReturn;
                         cout<<clientIPViaUdp<<" and "<<clientPortViaUdp<<endl;
                         newRequest = true;
-                        CLIENT.publicKey = pkt->publicKey;
+                        CLIENT.clientAddr = clientAddrUdp;
+
+                        uint32_t keyLen = ntohl(pkt->publicKeyLen);
+                        std::string key(keyLen, '\0');
+                        recvfrom(sockfdUdp, key.data(), keyLen, 0,(struct sockaddr*)&clientAddrUdp, &clientAddrLen);
+                        CLIENT.publicKey = deserializePublicKeyFromString(key);
+                        // cout<<"key received from client"<<endl;
+                        // cout<<"-----------"<<endl;
+                        // cout<<key<<endl;
+                        // cout<<"-----------"<<endl;
 
                     }
                     cout<<buffer<<endl;

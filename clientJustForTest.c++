@@ -45,27 +45,33 @@ int main(int argc, char const *argv[]){
 
 
 
+    
+
+    // a very simple chat receiver
+    cout<<"Receiving..."<<endl;
+    while (1){
+        char buffer[256];
+                int bytesReceived = recv(peerWhoReceived.peerSocket, buffer, sizeof(buffer) - 1, 0);
+                if(bytesReceived > 0){
+                    cout << "Received from server: " << buffer << "\n";
+                    cout.flush();
+        }
+    }
 
 
 
 
 
-    // cout<<"Receiving..."<<endl;
-    // while (1){
-    //     char buffer[1024];
-    //             int bytesReceived = recv(peerWhoReceived.peerSocket, buffer, sizeof(buffer) - 1, 0);
-    //             if(bytesReceived > 0){
-    //                 buffer[bytesReceived] = '\0';
-    //                 cout << "Received from server: " << buffer << "\n";
-    //                 cout.flush();
-    //     }
-    // }
+
+
     
     
     #ifdef _WIN32
     WSACleanup();
     #endif
-
+    
     
     return 0;
 }
+
+

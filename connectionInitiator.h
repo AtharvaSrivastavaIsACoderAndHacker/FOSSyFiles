@@ -3,6 +3,10 @@
 #include <atomic>
 #include <cstring>
 #include "sharedStructs.h"
+
+#ifndef ENDEincluded
+#include "ENorDECRYPTstring.h"
+#endif
 // #include <mutex>
 // #include <condition_variable>
 
@@ -58,14 +62,21 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const s
     strncpy(pkt.magic, "_____connectionRequestDatagram_____fossyfiles_____", sizeof(pkt.magic)-1);
     pkt.magic[sizeof(pkt.magic)-1] = '\0'; // ensure null termination
     pkt.tcpReturn = tcpReturnPort;
-    pkt.publicKey = publicKey;
+    std::string publicKeyTem = serializePublicKeyToString(publicKey);
+    pkt.publicKeyLen = htonl(publicKeyTem.size());
     // cout<<pkt.tcpReturn;
-
+    // cout<<"-----------"<<endl;
+    // cout<<publicKeyTem<<endl; 
+    // cout<<"-----------"<<endl;
     
 
     // while (!stopFlag) {
         sendto(udpSock, reinterpret_cast<char*>(&pkt), sizeof(pkt), 0,
-               (sockaddr*)&serverAddr, sizeof(serverAddr));
+                (sockaddr*)&serverAddr, sizeof(serverAddr));
+        sendto(udpSock, publicKeyTem.data(), publicKeyTem.size(), 0,
+                (sockaddr*)&serverAddr, sizeof(serverAddr));
+
+        // cout<<"key sent to server"<<endl;
         // {
         // unique_lock<mutex> lock(udpMutex);
         // udpCV.wait(lock, [](){ return startUdp; });
@@ -132,9 +143,15 @@ void connectTo(const string& server_ip,const string& self_ip, int udpPort, int t
     }
 
     if (strncmp(pkt.magic, "_____connectionRequestDatagram_____fossyfiles_____", sizeof(pkt.magic)) != 0) {
-        std::cerr << "[Receiver] Invalid knock packet received!\n";
+        std::cerr << "[Initiator] Invalid knock packet received!\n";
     }
-    peerWhoReceived.publicKey = pkt.publicKey;
+
+    
+
+    uint32_t keyLen = ntohl(pkt.publicKeyLen);
+    std::string key(keyLen, '\0');
+    recvfrom(tcpSock, key.data(), keyLen, 0,(struct sockaddr*)&serverAddr, &addrlen);
+    peerWhoReceived.publicKey = deserializePublicKeyFromString(key);
     /////////// done
 
 

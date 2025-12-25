@@ -72,7 +72,7 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, SOCKET receiverSO
 
     std::string meta = write_metadata_chunk(metadata ,true);
     // std::string meta = rsaCrypt(key,write_metadata_chunk(metadata ,true), 0);
-    // cout<<rsaCrypt(key,meta, 1)<<endl;
+    // cout<<rsaCrypt(key,meta, 0)<<endl;
     // send(receiverSOCKET,meta.c_str(), meta.size(),0);
 
     
@@ -84,9 +84,19 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, SOCKET receiverSO
             buffer.resize(bytes_read);
 
             std::string finalTransmissionChunkString = std::string(buffer.begin(), buffer.end());
-            // cout<<rsaCrypt(key,finalTransmissionChunkString, 1)<<endl;
+            // std::string enc = rsaCrypt(key,finalTransmissionChunkString, 0);
 
-            // send(receiverSOCKET,finalTransmissionChunkString.c_str(), finalTransmissionChunkString.size()  ,0);
+            
+            // CURRENTLY THIS DOESNT ENCRYT AND IS SHITTY IN TERMS OF EXACT FILE RECONSTRUCTION OVER THERE !
+
+
+            // cout<<finalTransmissionChunkString; // log
+            // cout<<enc<<endl; // log
+
+
+            send(receiverSOCKET,finalTransmissionChunkString.c_str(), finalTransmissionChunkString.size() ,0);
+
+
 
     }
     std::cout << "File fragmented into " << total_chunks << " chunks sent to  " << receiverSOCKET << "\n";

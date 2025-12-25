@@ -28,19 +28,40 @@ int main(int argc, char const *argv[]){
 
         // std::thread listenFinalThread(listenFinal);
 
+
+
     listenFinal(KEYS.publicKey);
 
-    // if (connected){
-        // fragmentEncryptAndSendAFile("README.md", CLIENT.clientSocket, KEYS.privateKey);
-    // }
+    cout<<"out in main now"<<endl;
+    if (connected){
+        fragmentEncryptAndSendAFile("README.md", CLIENT.clientSocket, CLIENT.publicKey);
+    }
     
 
 
+
+    // a very simple chat sender
+    if(connected){
+        while(1){
+            std::string buffer;
+            getline(cin, buffer);
+            int bytesSent = send(CLIENT.clientSocket, buffer.c_str(), sizeof(buffer) - 1, 0);
+            if(bytesSent > 0){
+                cout << "Sent to client: " << buffer << "\n";
+                cout.flush();
+            }
+        }
+    }
+    
+    
     #ifdef _WIN32
     WSACleanup();
     #endif
-
-
+    
+    
     
     return 0;
 }
+
+
+

@@ -3,6 +3,34 @@
 #include <openssl/pem.h>
 #include <string>
 #include <stdexcept>
+#include <openssl/x509.h>
+#include <string>
+#include <stdexcept>
+
+#define ENDEincluded ;
+
+std::string serializePublicKeyToString(EVP_PKEY* pubkey) {
+    int len = i2d_PUBKEY(pubkey, nullptr);
+    if (len <= 0) {
+        throw std::runtime_error("i2d_PUBKEY failed");
+    }
+
+    std::string serialized(len, '\0');  // allocate string with len bytes
+    unsigned char* p = reinterpret_cast<unsigned char*>(serialized.data());
+    i2d_PUBKEY(pubkey, &p);  // serialize into string buffer
+
+    return serialized;
+}
+
+EVP_PKEY* deserializePublicKeyFromString(const std::string& serialized) {
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(serialized.data());
+    EVP_PKEY* pubkey = d2i_PUBKEY(nullptr, &p, serialized.size());
+    if (!pubkey) {
+        throw std::runtime_error("d2i_PUBKEY failed");
+    }
+    return pubkey;
+}
+
 
 // mode = 0 → encrypt with public key
 // mode = 1 → decrypt with private key

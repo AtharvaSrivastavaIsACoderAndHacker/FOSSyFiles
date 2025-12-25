@@ -71,7 +71,8 @@ void listenFinal(EVP_PKEY* publicKey){
             memset(&keypayload, 0, sizeof(keypayload));
             strncpy(keypayload.magic, "_____connectionRequestDatagram_____fossyfiles_____", sizeof(keypayload.magic)-1);
             keypayload.magic[sizeof(keypayload.magic)-1] = '\0';
-            keypayload.publicKey = publicKey;
+            std::string serialized = serializePublicKeyToString(publicKey);
+            keypayload.publicKeyLen = htonl(serialized.size());
 
             sockaddr_in clientAddrForKeyShare{};
             clientAddrForKeyShare.sin_family = AF_INET;
@@ -79,9 +80,10 @@ void listenFinal(EVP_PKEY* publicKey){
             clientAddrForKeyShare.sin_port = htons(CLIENT.clientAddr.sin_port);
 
             int bytesSent = send(CLIENT.clientSocket, reinterpret_cast<char*>(&keypayload), sizeof(keypayload), 0);
+            int bytesKeySent = sendto(CLIENT.clientSocket, serialized.data(), serialized.size(), 0,(sockaddr*)&CLIENT.clientAddr, sizeof(CLIENT.clientAddr));
 
 
-
+            
 
             
             {
@@ -96,13 +98,6 @@ void listenFinal(EVP_PKEY* publicKey){
 
 
 
-            // string buffer;
-            // getline(cin, buffer);
-            // int bytesSent = send(CLIENT.clientSocket, buffer.c_str(), sizeof(buffer) - 1, 0);
-            // if(bytesSent > 0){
-            //     cout << "Sent to client: " << buffer << "\n";
-            //     cout.flush();
-            // }
         }
         
     }

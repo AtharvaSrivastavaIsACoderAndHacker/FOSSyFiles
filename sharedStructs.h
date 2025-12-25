@@ -23,7 +23,8 @@
 struct KnockPacket {
     char magic[128];
     int tcpReturn;
-    EVP_PKEY* publicKey;
+    std::string publicKey;
+    uint32_t publicKeyLen;
 };
 #pragma pack(pop)
 
