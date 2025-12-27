@@ -23,12 +23,7 @@ int main(int argc, char const *argv[]){
     #endif
 
 
-    string ip = "127.0.0.1";
-    int port = 12000;
-
-        // std::thread listenFinalThread(listenFinal);
-
-
+    
 
     listenFinal(KEYS.publicKey);
 

@@ -43,7 +43,8 @@ RSAKeyPair generateRSAKeyPair(int bits = 2048) {
     }
 
     // Extract the RSA from private key (read-only)
-    const RSA* rsaPriv = EVP_PKEY_get0_RSA(pair.privateKey);
+    RSA *rsaPriv = EVP_PKEY_get1_RSA(pair.privateKey);
+
     if (!rsaPriv) {
         EVP_PKEY_free(pair.privateKey);
         EVP_PKEY_free(pair.publicKey);
@@ -52,7 +53,8 @@ RSAKeyPair generateRSAKeyPair(int bits = 2048) {
     }
 
     // Duplicate only the public key components (n, e)
-    RSA* rsaPubDup = RSAPublicKey_dup(rsaPriv);
+    RSA *rsaPubDup = RSAPrivateKey_dup(rsaPriv);
+
     if (!rsaPubDup) {
         EVP_PKEY_free(pair.privateKey);
         EVP_PKEY_free(pair.publicKey);

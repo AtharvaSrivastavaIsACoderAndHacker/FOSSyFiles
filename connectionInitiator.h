@@ -34,7 +34,7 @@ extern atomic<bool> stopFlag;
 
 
 
-void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const string& self_ip, EVP_PKEY* publicKey){
+void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
     SOCKET udpSock = socket(AF_INET, SOCK_DGRAM, 0);
     if (udpSock == INVALID_SOCKET) {
         cerr << "UDP socket creation failed\n";
@@ -48,13 +48,13 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const s
     
     sockaddr_in selfAddr{};
     selfAddr.sin_family = AF_INET;
-    inet_pton(AF_INET, self_ip.c_str(), &selfAddr.sin_addr);
+    selfAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     selfAddr.sin_port = htons(tcpReturnPort);
 
-    if (bind(udpSock, (sockaddr*)&selfAddr, sizeof(selfAddr)) == SOCKET_ERROR) {
-        cerr << "[Initiator] UDP bind failed: " << WSAGetLastError() << "\n";
-        return;
-    }
+    // if (bind(udpSock, (sockaddr*)&selfAddr, sizeof(selfAddr)) == SOCKET_ERROR) {
+    //     cerr << "[Initiator] UDP bind failed: " << WSAGetLastError() << "\n";
+    //     return;
+    // }
     
 
     KnockPacket pkt{};
@@ -88,8 +88,8 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, const s
 
 
 
-void connectTo(const string& server_ip,const string& self_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
-    thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, self_ip, publicKey);
+void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
+    thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, publicKey);
 
     SOCKET listenSock = socket(AF_INET, SOCK_STREAM, 0);
     if (listenSock == INVALID_SOCKET) {
@@ -98,7 +98,7 @@ void connectTo(const string& server_ip,const string& self_ip, int udpPort, int t
 
     sockaddr_in listenAddr{};
     listenAddr.sin_family = AF_INET;
-    listenAddr.sin_addr.s_addr = inet_addr(self_ip.c_str());   // accept on any interface
+    listenAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     listenAddr.sin_port = htons(tcpReturnPort);
 
     if (bind(listenSock, (sockaddr*)&listenAddr, sizeof(listenAddr)) == SOCKET_ERROR) {

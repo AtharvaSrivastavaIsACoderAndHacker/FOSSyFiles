@@ -29,10 +29,9 @@ using namespace std;
 void listenFinal(EVP_PKEY* publicKey){
 
     //// start
-    string ip = "127.0.0.1";
     int port = 12000;
 
-    std::thread listenerThread(listenAndAccept, ip, port);
+    std::thread listenerThread(listenAndAccept, port);
     
     while (!exitNow && listenMode){
 

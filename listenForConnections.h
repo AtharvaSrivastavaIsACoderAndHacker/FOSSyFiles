@@ -47,7 +47,7 @@ extern int clientPortViaUdp;
 
 ConnectionRequest CLIENT;
 
-inline void listenAndAccept(string server_ip, int port){
+inline void listenAndAccept(int port){
 
     
     int sockfdUdp; 
@@ -59,8 +59,8 @@ inline void listenAndAccept(string server_ip, int port){
     } 
     memset(&servaddr, 0, sizeof(servaddr)); 
     memset(&cliaddr, 0, sizeof(cliaddr)); 
-    servaddr.sin_family    = AF_INET;  
-    servaddr.sin_addr.s_addr = inet_addr(server_ip.c_str()); 
+    servaddr.sin_family = AF_INET;  
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(port);  
     if ( bind(sockfdUdp, (const struct sockaddr *)&servaddr,  
             sizeof(servaddr)) < 0 ) 
@@ -81,9 +81,10 @@ inline void listenAndAccept(string server_ip, int port){
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(port);
-    if (inet_pton(AF_INET, server_ip.c_str(), &serverAddress.sin_addr) <= 0) {
-        cerr << "Invalid server IP address: " << server_ip << "\n";
-    }
+    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    // if (inet_pton(AF_INET, server_ip.c_str(), &serverAddress.sin_addr) <= 0) {
+    //     cerr << "Invalid server IP address: " << server_ip << "\n";
+    // }
 
     int bindingReturn = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     if (bindingReturn == SOCKET_ERROR) perror("error in binding !");

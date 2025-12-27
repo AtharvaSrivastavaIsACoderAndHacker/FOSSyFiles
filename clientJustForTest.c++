@@ -40,7 +40,7 @@ int main(int argc, char const *argv[]){
     int port = 12000;
 
 
-    connectTo(server_ip, "127.0.0.1", port, 12001, KEYS.publicKey);
+    connectTo(server_ip, port, 12001, KEYS.publicKey);
     cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
 
 
