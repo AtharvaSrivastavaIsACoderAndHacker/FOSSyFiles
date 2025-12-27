@@ -1,16 +1,22 @@
-#include<stdio.h>
-#include<windows.h>
+#include <stdlib.h>
 
-int main(int argc, char const *argv[]){
-    
-    char* cmd = "g++ main.c++ -o main -lws2_32 -lcrypto -lssl";
-    system(cmd);
-    cmd = "g++ clientJustForTest.c++ -o client -lws2_32 -lcrypto -lssl";
-    system(cmd);
-    cmd = ".\\main";
-    system(cmd);
-    
-     
-    
+int main(void) {
+    // static linking
+    system(
+        "g++ main.c++ -o main.exe "
+        "-static -static-libgcc -static-libstdc++ "
+        "-Wl,--whole-archive -lssl -lcrypto -Wl,--no-whole-archive "
+        "-lws2_32 -lcrypt32 -ladvapi32 -lbcrypt"
+    );
+
+    system(
+        "g++ clientJustForTest.c++ -o client.exe "
+        "-static -static-libgcc -static-libstdc++ "
+        "-Wl,--whole-archive -lssl -lcrypto -Wl,--no-whole-archive "
+        "-lws2_32 -lcrypt32 -ladvapi32 -lbcrypt"
+    );
+
+    system(".\\main.exe");
+
     return 0;
 }
