@@ -107,7 +107,7 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
 
     
     sockaddr_in serverAddr;
-    int addrlen = sizeof(serverAddr);
+    socklen_t addrlen = sizeof(serverAddr);
     int tcpSock = accept(listenSock, (sockaddr*)&serverAddr, &addrlen);
     if (tcpSock == INVALID_SOCKET) {
         #ifdef _WIN32

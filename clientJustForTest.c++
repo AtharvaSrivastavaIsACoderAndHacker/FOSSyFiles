@@ -9,7 +9,7 @@
     #pragma comment(lib, "Ws2_32.lib")
 #else
     #include <sys/types.h>
-    #include <sys/socket_t.h>
+    #include <sys/socket.h>
     #include <netinet/in.h>
     #include <arpa/inet.h>
     #include <unistd.h>
