@@ -36,7 +36,7 @@ int main(int argc, char const *argv[]){
         fragmentEncryptAndSendAFile("README.md", CLIENT.clientSocket, CLIENT.publicKey);
     }
     
-
+ 
 
 
     // a very simple chat sender
