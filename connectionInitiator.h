@@ -38,7 +38,7 @@ extern atomic<bool> stopFlag;
 
 
 void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
-    SOCKET udpSock = socket(AF_INET, SOCK_DGRAM, 0);
+    socket_t udpSock = socket(AF_INET, SOCK_DGRAM, 0);
     if (udpSock == INVALID_SOCKET) {
         cerr << "UDP socket creation failed\n";
         return;
@@ -76,7 +76,7 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
 void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
     thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, publicKey);
 
-    SOCKET listenSock = socket(AF_INET, SOCK_STREAM, 0);
+    socket_t listenSock = socket(AF_INET, SOCK_STREAM, 0);
     if (listenSock == INVALID_SOCKET) {
         cerr << "[Initiator] -- TCP socket creation failed\n";
     }

@@ -58,7 +58,7 @@ std::string write_metadata_chunk(const FileMetadata& metadata, bool is_start) {
     return meta;
 }
 
-void fragmentEncryptAndSendAFile(const std::string& file_path, SOCKET receiverSOCKET, EVP_PKEY* key, std::size_t chunk_size = 214) {
+void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, EVP_PKEY* key, std::size_t chunk_size = 214) {
 
     std::ifstream in(file_path, std::ios::binary | std::ios::ate);
     if (!in) {
