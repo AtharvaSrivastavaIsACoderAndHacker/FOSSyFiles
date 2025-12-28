@@ -5,6 +5,11 @@
 #include <openssl/err.h>
 #include <stdexcept>
 
+
+#ifndef sharedStructsIncluded
+#include "sharedStructs.h"
+#endif
+
 struct RSAKeyPair {
     EVP_PKEY* privateKey; // owns private key
     EVP_PKEY* publicKey;  // owns public key

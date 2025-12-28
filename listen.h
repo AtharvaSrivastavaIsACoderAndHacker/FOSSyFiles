@@ -8,6 +8,10 @@
   #include <unistd.h>
 #endif
 
+#ifndef sharedStructsIncluded
+#include "sharedStructs.h"
+#endif
+
 atomic<bool> stopListening(false);
 mutex mtx;
 condition_variable cv;

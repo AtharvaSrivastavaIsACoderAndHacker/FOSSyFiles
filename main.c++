@@ -3,6 +3,10 @@
 #include "listen.h"
 #include "RSA_keygen.h"
 
+#ifndef sharedStructsIncluded
+#include "sharedStructs.h"
+#endif
+
 using namespace std;
 
 int main(int argc, char const *argv[]){

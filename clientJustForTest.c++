@@ -15,6 +15,10 @@
     #include <unistd.h>
 #endif
 
+#ifndef sharedStructsIncluded
+#include "sharedStructs.h"
+#endif
+
 struct Connection peerWhoReceived;
 atomic<bool> stopFlag(false);
 

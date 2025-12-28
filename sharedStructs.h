@@ -1,6 +1,9 @@
 #ifndef SHARED_TYPES_H
 #define SHARED_TYPES_H
 
+#include"platformIndependent.h"
+#define sharedStructsIncluded ;
+
 #include <cstdint>
 #ifdef _WIN32
     #include <winsock2.h>

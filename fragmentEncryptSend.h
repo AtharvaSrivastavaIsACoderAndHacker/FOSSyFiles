@@ -16,6 +16,10 @@
     #include <unistd.h>
 #endif
 
+#ifndef sharedStructsIncluded
+#include "sharedStructs.h"
+#endif
+
 namespace fs = std::filesystem;
 using namespace std;
 

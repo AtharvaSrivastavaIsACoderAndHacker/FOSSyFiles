@@ -3,7 +3,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#ifndef sharedStructsIncluded
 #include "sharedStructs.h"
+#endif
 
 #ifdef _WIN32
     #include <winsock2.h>

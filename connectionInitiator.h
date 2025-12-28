@@ -2,7 +2,10 @@
 #include <thread>
 #include <atomic>
 #include <cstring>
+
+#ifndef sharedStructsIncluded
 #include "sharedStructs.h"
+#endif
 
 #ifndef ENDEincluded
 #include "ENorDECRYPTstring.h"

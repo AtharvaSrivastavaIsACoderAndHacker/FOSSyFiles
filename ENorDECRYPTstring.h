@@ -7,6 +7,10 @@
 #include <string>
 #include <stdexcept>
 
+#ifndef sharedStructsIncluded
+#include "sharedStructs.h"
+#endif
+
 #define ENDEincluded ;
 
 std::string serializePublicKeyToString(EVP_PKEY* pubkey) {
