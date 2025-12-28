@@ -51,11 +51,6 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
     selfAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     selfAddr.sin_port = htons(tcpReturnPort);
 
-    // if (bind(udpSock, (sockaddr*)&selfAddr, sizeof(selfAddr)) == SOCKET_ERROR) {
-    //     cerr << "[Initiator] UDP bind failed: " << WSAGetLastError() << "\n";
-    //     return;
-    // }
-    
 
     KnockPacket pkt{};
     memset(&pkt, 0, sizeof(pkt));
@@ -64,25 +59,12 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
     pkt.tcpReturn = tcpReturnPort;
     std::string publicKeyTem = serializePublicKeyToString(publicKey);
     pkt.publicKeyLen = htonl(publicKeyTem.size());
-    // cout<<pkt.tcpReturn;
-    // cout<<"-----------"<<endl;
-    // cout<<publicKeyTem<<endl; 
-    // cout<<"-----------"<<endl;
-    
 
-    // while (!stopFlag) {
         sendto(udpSock, reinterpret_cast<char*>(&pkt), sizeof(pkt), 0,
                 (sockaddr*)&serverAddr, sizeof(serverAddr));
         sendto(udpSock, publicKeyTem.data(), publicKeyTem.size(), 0,
                 (sockaddr*)&serverAddr, sizeof(serverAddr));
-
-        // cout<<"key sent to server"<<endl;
-        // {
-        // unique_lock<mutex> lock(udpMutex);
-        // udpCV.wait(lock, [](){ return startUdp; });
-        // }
-    // }
-    
+                
     closesocket(udpSock);
 }
 
@@ -102,11 +84,20 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
     listenAddr.sin_port = htons(tcpReturnPort);
 
     if (bind(listenSock, (sockaddr*)&listenAddr, sizeof(listenAddr)) == SOCKET_ERROR) {
+        #ifdef _WIN32
         cerr << "[Initiator] -- Bind failed: " << WSAGetLastError() << "\n";
+        #else
+        perror("[Initiator] -- Bind failed -- linux ");
+        #endif
+
     }
 
     if (listen(listenSock, 1) == SOCKET_ERROR) {
+        #ifdef _WIN32
         cerr << "[Initiator] -- Listen failed: " << WSAGetLastError() << "\n";
+        #else
+        perror("[Initiator] -- Listen failed -- linux ");
+        #endif
     }
 
     cout << "[Initiator] -- Waiting for TCP connection on port " << tcpReturnPort << "...\n";
@@ -116,7 +107,11 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
     int addrlen = sizeof(serverAddr);
     int tcpSock = accept(listenSock, (sockaddr*)&serverAddr, &addrlen);
     if (tcpSock == INVALID_SOCKET) {
+        #ifdef _WIN32
         cerr << "[Initiator] -- Return Accept failed: " << WSAGetLastError() << "\n";
+        #else
+        perror("[Initiator] -- Return Accept failed -- linux ");
+        #endif
     }
 
 

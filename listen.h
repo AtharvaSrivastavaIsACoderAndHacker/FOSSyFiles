@@ -1,7 +1,12 @@
 #include<iostream>
 #include "listenForConnections.h"
 #include <thread>
-#include <conio.h>
+#ifdef _WIN32
+  #include <conio.h>
+#else
+  #include <termios.h>
+  #include <unistd.h>
+#endif
 
 atomic<bool> stopListening(false);
 mutex mtx;
