@@ -29,6 +29,8 @@ struct KnockPacket {
     int tcpReturn;
     std::string publicKey;
     uint32_t publicKeyLen;
+    int filePort;
+    int latencyOfConnection;
 };
 #pragma pack(pop)
 
@@ -36,6 +38,28 @@ struct Connection {
     sockaddr_in peerAddr;
     int peerSocket;
     EVP_PKEY* publicKey;
+    std::string sharedSecret;
+};
+struct ConnectionFinal {
+    sockaddr_in peerAddr;
+    int peerSocket;
+    EVP_PKEY* publicKey;
+    int filePort;
+    int tcpReturn;
+    std::string clientIPViaUdp;
+    int clientPortViaUdp;
+    std::string sharedSecret;
+    int latencyOfConnection;
 };
 
+struct FileInfo {
+    std::string fileName;
+    long fileSizeInBytes;
+    int chunkSizeInBytes;
+    long totalChunks;
+};
+struct DHKeyPair {
+    EVP_PKEY* privateKey;
+    EVP_PKEY* publicKey;
+};
 #endif

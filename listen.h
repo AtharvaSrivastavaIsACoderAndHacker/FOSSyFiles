@@ -29,8 +29,9 @@ string clientIPViaUdp;
 int clientPortViaUdp;
 atomic<bool> stopFlag(false);
 
-// For when we have to initiate a Connection to a peer, and not listen
-Connection peerWhoReceived;
+extern DHKeyPair KEYS;
+
+
 
 using namespace std;
 
@@ -81,6 +82,7 @@ void listenFinal(EVP_PKEY* publicKey){
             keypayload.magic[sizeof(keypayload.magic)-1] = '\0';
             std::string serialized = serializePublicKeyToString(publicKey);
             keypayload.publicKeyLen = htonl(serialized.size());
+            keypayload.latencyOfConnection = CLIENTFULL.latencyOfConnection;
 
             sockaddr_in clientAddrForKeyShare{};
             clientAddrForKeyShare.sin_family = AF_INET;
@@ -91,7 +93,10 @@ void listenFinal(EVP_PKEY* publicKey){
             int bytesKeySent = sendto(CLIENT.clientSocket, serialized.data(), serialized.size(), 0,(sockaddr*)&CLIENT.clientAddr, sizeof(CLIENT.clientAddr));
 
 
-            
+            std::string sharedSecret = deriveSharedSecret(KEYS.privateKey, CLIENT.publicKey);
+            std::string sharedSecretFinal = deriveAESKey256(sharedSecret);
+            CLIENTFULL.sharedSecret = sharedSecretFinal;
+
 
             
             {

@@ -1,83 +1,80 @@
-// RSA_keygen.h
+
+
 #pragma once
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/err.h>
 #include <stdexcept>
-
 
 #ifndef sharedStructsIncluded
 #include "sharedStructs.h"
 #endif
 
-struct RSAKeyPair {
-    EVP_PKEY* privateKey; // owns private key
-    EVP_PKEY* publicKey;  // owns public key
-};
+#define keyGenHeaderIncluded ;
 
-// Modern OpenSSL 3.x keygen, const-correct
-RSAKeyPair generateRSAKeyPair(int bits = 2048) {
-    RSAKeyPair pair{nullptr, nullptr};
+inline DHKeyPair generateDHKeyPair() {
+    DHKeyPair pair{nullptr, nullptr};
 
-    // Create context for RSA key generation
-    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
-    if (!ctx) throw std::runtime_error("EVP_PKEY_CTX_new_id failed");
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, nullptr);
+    if (!ctx) throw std::runtime_error("CTX fail");
 
-    if (EVP_PKEY_keygen_init(ctx) <= 0) {
-        EVP_PKEY_CTX_free(ctx);
-        throw std::runtime_error("EVP_PKEY_keygen_init failed");
-    }
+    EVP_PKEY_keygen_init(ctx);
+    EVP_PKEY_keygen(ctx, &pair.privateKey);
 
-    if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) <= 0) {
-        EVP_PKEY_CTX_free(ctx);
-        throw std::runtime_error("EVP_PKEY_CTX_set_rsa_keygen_bits failed");
-    }
+    // extract public key
+    size_t len = 0;
+    EVP_PKEY_get_raw_public_key(pair.privateKey, nullptr, &len);
 
-    // Generate the private key
-    if (EVP_PKEY_keygen(ctx, &pair.privateKey) <= 0) {
-        EVP_PKEY_CTX_free(ctx);
-        throw std::runtime_error("EVP_PKEY_keygen failed");
-    }
+    std::string pub(len, '\0');
+    EVP_PKEY_get_raw_public_key(pair.privateKey,
+        reinterpret_cast<unsigned char*>(&pub[0]), &len);
 
-    // Allocate EVP_PKEY for public key
-    pair.publicKey = EVP_PKEY_new();
-    if (!pair.publicKey) {
-        EVP_PKEY_free(pair.privateKey);
-        EVP_PKEY_CTX_free(ctx);
-        throw std::runtime_error("EVP_PKEY_new failed for public key");
-    }
+    pair.publicKey = EVP_PKEY_new_raw_public_key(
+        EVP_PKEY_X25519, nullptr,
+        reinterpret_cast<unsigned char*>(&pub[0]), pub.size()
+    );
 
-    // Extract the RSA from private key (read-only)
-    RSA *rsaPriv = EVP_PKEY_get1_RSA(pair.privateKey);
-
-    if (!rsaPriv) {
-        EVP_PKEY_free(pair.privateKey);
-        EVP_PKEY_free(pair.publicKey);
-        EVP_PKEY_CTX_free(ctx);
-        throw std::runtime_error("EVP_PKEY_get0_RSA failed");
-    }
-
-    // Duplicate only the public key components (n, e)
-    RSA *rsaPubDup = RSAPrivateKey_dup(rsaPriv);
-
-    if (!rsaPubDup) {
-        EVP_PKEY_free(pair.privateKey);
-        EVP_PKEY_free(pair.publicKey);
-        EVP_PKEY_CTX_free(ctx);
-        throw std::runtime_error("RSAPublicKey_dup failed");
-    }
-
-    // Assign the duplicated public key to EVP_PKEY
-    if (EVP_PKEY_assign_RSA(pair.publicKey, rsaPubDup) <= 0) {
-        RSA_free(rsaPubDup);
-        EVP_PKEY_free(pair.privateKey);
-        EVP_PKEY_free(pair.publicKey);
-        EVP_PKEY_CTX_free(ctx);
-        throw std::runtime_error("EVP_PKEY_assign_RSA failed");
-    }
-
-    // Cleanup
     EVP_PKEY_CTX_free(ctx);
-
     return pair;
+}
+
+
+std::string deriveAESKey256(const std::string& sharedSecret) {
+    unsigned char out[32]; // 256-bit AES key
+
+    EVP_MD_CTX* md = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(md, EVP_sha256(), nullptr);
+    EVP_DigestUpdate(md, sharedSecret.data(), sharedSecret.size());
+    EVP_DigestFinal_ex(md, out, nullptr);
+    EVP_MD_CTX_free(md);
+
+    return std::string(reinterpret_cast<char*>(out), 32);
+}
+
+inline std::string deriveSharedSecret(
+    EVP_PKEY* myPrivateKey,
+    EVP_PKEY* peerPublicKey
+) {
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(myPrivateKey, nullptr);
+    if (!ctx) throw std::runtime_error("derive ctx fail");
+
+    if (EVP_PKEY_derive_init(ctx) <= 0)
+        throw std::runtime_error("derive init fail");
+
+    if (EVP_PKEY_derive_set_peer(ctx, peerPublicKey) <= 0)
+        throw std::runtime_error("set peer key fail");
+
+    size_t secretLen = 0;
+    EVP_PKEY_derive(ctx, nullptr, &secretLen);
+
+    std::string secret(secretLen, '\0');
+
+    if (EVP_PKEY_derive(
+            ctx,
+            reinterpret_cast<unsigned char*>(&secret[0]),
+            &secretLen
+        ) <= 0)
+        throw std::runtime_error("derive failed");
+
+    secret.resize(secretLen);
+    EVP_PKEY_CTX_free(ctx);
+    return secret;
 }

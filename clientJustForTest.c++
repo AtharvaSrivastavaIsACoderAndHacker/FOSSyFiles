@@ -1,34 +1,13 @@
-#include<iostream>
-#include <atomic>
-#include "connectionInitiator.h"
-#include "RSA_keygen.h"
-
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #pragma comment(lib, "Ws2_32.lib")
-#else
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <unistd.h>
-#endif
-
-#ifndef sharedStructsIncluded
-#include "sharedStructs.h"
-#endif
-
-struct Connection peerWhoReceived;
-atomic<bool> stopFlag(false);
+#include"oneInclude.h"
+extern atomic<bool> stopFlag;
 
 
 using namespace std;
 
+
 int main(int argc, char const *argv[]){
 
 
-    RSAKeyPair KEYS = generateRSAKeyPair();
     
     #ifdef _WIN32
     // Windows needs WSAStartup/WSACleanup
@@ -44,26 +23,29 @@ int main(int argc, char const *argv[]){
     int port = 12000;
 
 
-    connectTo(server_ip, port, 12001, KEYS.publicKey);
+    
+    connectTo(server_ip, port, 12001, KEYS.publicKey, 12002);
     cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
 
 
 
-    
-
-    // a very simple chat receiver
-    cout<<"Receiving..."<<endl;
-    while (1){
-        char buffer[256];
-                int bytesReceived = recv(peerWhoReceived.peerSocket, buffer, sizeof(buffer) - 1, 0);
-                if(bytesReceived > 0){
-                    cout << "Received from server: " << buffer << "\n";
-                    cout.flush();
-        }
-    }
+    defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, "Received\\");
 
 
 
+
+
+ 
+    // // a very simple chat receiver
+    // cout<<"Receiving..."<<endl;
+    // while (1){ 
+    //     char buffer[256];
+    //     int bytesReceived = recv(peerWhoReceived.peerSocket, buffer, sizeof(buffer) - 1, 0);
+    //     if(bytesReceived > 0){
+    //         cout << "Received from server: " << buffer << "\n";
+    //         cout.flush();
+    //     }
+    // }
 
 
 

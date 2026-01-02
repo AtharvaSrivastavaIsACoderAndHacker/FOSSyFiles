@@ -3,25 +3,25 @@
 #include <atomic>
 #include <cstring>
 
+
 #ifndef sharedStructsIncluded
 #include "sharedStructs.h"
 #endif
 
 #ifndef ENDEincluded
-#include "ENorDECRYPTstring.h"
+#include "fragmentEncryptSend.h" // quick fix sry, ik this aint tech debt , maybe xd
 #endif
-// #include <mutex>
-// #include <condition_variable>
+
+#ifndef keyGenHeaderIncluded
+#include "RSA_keygen.h"
+#endif
 
 using namespace std;
 
 extern bool connected;
-extern Connection peerWhoReceived;
+ConnectionFinal peerWhoReceived;
 extern atomic<bool> stopFlag;
 
-// mutex udpMutex;
-// condition_variable udpCV;
-// bool startUdp = false;
 
 #ifdef _WIN32
     #include <winsock2.h>
@@ -35,9 +35,11 @@ extern atomic<bool> stopFlag;
     #include <unistd.h>
 #endif
 
+extern DHKeyPair KEYS;
 
 
-void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
+
+void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey, int filePort){
     socket_t udpSock = socket(AF_INET, SOCK_DGRAM, 0);
     if (udpSock == INVALID_SOCKET) {
         cerr << "UDP socket creation failed\n";
@@ -60,6 +62,7 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
     strncpy(pkt.magic, "_____connectionRequestDatagram_____fossyfiles_____", sizeof(pkt.magic)-1);
     pkt.magic[sizeof(pkt.magic)-1] = '\0'; // ensure null termination
     pkt.tcpReturn = tcpReturnPort;
+    pkt.filePort = filePort;
     std::string publicKeyTem = serializePublicKeyToString(publicKey);
     pkt.publicKeyLen = htonl(publicKeyTem.size());
 
@@ -69,12 +72,14 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
                 (sockaddr*)&serverAddr, sizeof(serverAddr));
                 
     closesocket(udpSock);
+
+    peerWhoReceived.filePort = filePort;
 }
 
 
 
-void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey){
-    thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, publicKey);
+void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey, int filePort){
+    thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, publicKey, filePort);
 
     socket_t listenSock = socket(AF_INET, SOCK_STREAM, 0);
     if (listenSock == INVALID_SOCKET) {
@@ -150,6 +155,13 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
     std::string key(keyLen, '\0');
     recvfrom(tcpSock, key.data(), keyLen, 0,(struct sockaddr*)&serverAddr, &addrlen);
     peerWhoReceived.publicKey = deserializePublicKeyFromString(key);
+    std::string sharedSecret = deriveSharedSecret(KEYS.privateKey, peerWhoReceived.publicKey);
+    std::string sharedSecretFinal = deriveAESKey256(sharedSecret);
+    peerWhoReceived.sharedSecret = sharedSecretFinal;
+    peerWhoReceived.latencyOfConnection = pkt.latencyOfConnection;
+
+    
+
     /////////// done
 
 
@@ -163,6 +175,8 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
     
     peerWhoReceived.peerAddr = serverAddr;
     peerWhoReceived.peerSocket = tcpSock;
+    peerWhoReceived.clientIPViaUdp = inet_ntoa(serverAddr.sin_addr);
+    peerWhoReceived.clientPortViaUdp = ntohs(serverAddr.sin_port);
 
     stopFlag = true; // stop sending UDP knocks
     knockThread.join();

@@ -1,3 +1,4 @@
+#include <chrono>
 #include<iostream>
 #include <utility>
 #include <mutex>
@@ -19,12 +20,18 @@
     #include <unistd.h>
 #endif
 
+#ifndef keyGenHeaderIncluded
+#include "RSA_keygen.h"
+#endif
+
 using namespace std;
 
 struct ConnectionRequest {
     sockaddr_in clientAddr;
     int clientSocket;
     EVP_PKEY* publicKey;
+    int filePort;
+    std::string sharedSecret;
 };
 struct ServerInfo {
     int serverSocket;
@@ -46,6 +53,7 @@ extern ConnectionRequest pendingRequest;
 extern ServerInfo server;
 extern string clientIPViaUdp;
 extern int clientPortViaUdp;
+ConnectionFinal CLIENTFULL;
 
 ConnectionRequest CLIENT;
 
@@ -137,6 +145,7 @@ inline void listenAndAccept(int port){
                         std::string key(keyLen, '\0');
                         recvfrom(sockfdUdp, key.data(), keyLen, 0,(struct sockaddr*)&clientAddrUdp, &clientAddrLen);
                         CLIENT.publicKey = deserializePublicKeyFromString(key);
+                        CLIENT.filePort = pkt->filePort;
                         // cout<<"key received from client"<<endl;
                         // cout<<"-----------"<<endl;
                         // cout<<key<<endl;
@@ -181,7 +190,9 @@ inline void listenAndAccept(int port){
                         connectToInitiator.sin_family = AF_INET;
                         connectToInitiator.sin_addr.s_addr = inet_addr(clientIPViaUdp.c_str());
                         connectToInitiator.sin_port = htons(clientPortViaUdp);
+                        auto start = std::chrono::high_resolution_clock::now();
                         int connectedOrNot = connect(ServerSocket, (struct sockaddr*)&connectToInitiator, sizeof(connectToInitiator));
+                        auto end = std::chrono::high_resolution_clock::now();
                         cout << "Connection accepted from "
                              << inet_ntoa(connectToInitiator.sin_addr) << " : " 
                              << ntohs(connectToInitiator.sin_port) << "\n";
@@ -192,6 +203,17 @@ inline void listenAndAccept(int port){
                              asking = false;
                              CLIENT.clientAddr = connectToInitiator;
                              CLIENT.clientSocket = ServerSocket;
+
+                             if(connected){
+                                CLIENTFULL.clientIPViaUdp = clientIPViaUdp;
+                                CLIENTFULL.clientPortViaUdp = clientPortViaUdp;
+                                CLIENTFULL.filePort = CLIENT.filePort;
+                                CLIENTFULL.peerAddr = CLIENT.clientAddr;
+                                CLIENTFULL.peerSocket = CLIENT.clientSocket;
+                                CLIENTFULL.publicKey = CLIENT.publicKey;
+                                CLIENTFULL.tcpReturn = clientPortViaUdp;
+                                CLIENTFULL.latencyOfConnection = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+                            }
                     } 
                     else {
                         cout << "Connection rejected.\n";

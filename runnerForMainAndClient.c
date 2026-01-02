@@ -16,6 +16,8 @@ int main(void) {
         "-lws2_32 -lcrypt32 -ladvapi32 -lbcrypt"
     );
 
+    // system("cls"); // so that it runs both in owershell and cmd --> only temporarily, when i want to see compilation errors, I'll comment this line !
+
     system(".\\main.exe");
 
     return 0;
