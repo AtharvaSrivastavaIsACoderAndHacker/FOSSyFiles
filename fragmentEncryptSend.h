@@ -63,7 +63,7 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2,2), &wsaData);
     #endif
-
+ 
     std::ifstream in(file_path, std::ios::binary | std::ios::ate);
     if (!in) {
         std::cerr << "Cannot open file " << file_path << " for reading.\n";
