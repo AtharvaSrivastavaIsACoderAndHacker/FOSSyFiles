@@ -96,7 +96,7 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
     #ifdef _WIN32
         inet_pton(AF_INET, CLIENT.clientIPViaUdp.c_str(), &clientChunkSizeSender.sin_addr);
     #else
-        server_addr.sin_addr.s_addr = inet_addr(CLIENT.clientIPViaUdp.c_str());
+        clientChunkSizeSender.sin_addr.s_addr = inet_addr(CLIENT.clientIPViaUdp.c_str());
     #endif
 
         if(connect(sizeSock, (sockaddr*)&clientChunkSizeSender, sizeof(clientChunkSizeSender)) == SOCKET_ERROR) {
