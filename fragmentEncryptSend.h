@@ -82,7 +82,7 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 
     FileMetadata metadata{ fs::path(file_path).filename().string(), file_size, chunk_size, total_chunks };
 
- 
+  
     std::string meta = write_metadata_chunk(metadata);
     send(receiverSOCKET,meta.c_str(), meta.size(),0);
 
