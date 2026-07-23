@@ -2,7 +2,7 @@
 
 using namespace std;
 
-
+ 
 int main(int argc, char const *argv[]){
 
     #ifdef _WIN32
