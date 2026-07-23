@@ -26,10 +26,10 @@
 #pragma pack(push, 1)
 struct KnockPacket {
     char magic[128];
-    int tcpReturn;
+    uint16_t tcpReturn;
     std::string publicKey;
     uint32_t publicKeyLen;
-    int filePort;
+    uint16_t filePort;
     int latencyOfConnection;
 };
 #pragma pack(pop)

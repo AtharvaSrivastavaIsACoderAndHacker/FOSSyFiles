@@ -63,8 +63,8 @@ inline void listenAndAccept(int port){
     int sockfdUdp; 
     char buffer[1024]; 
     struct sockaddr_in servaddr, cliaddr;  
-    if ( (sockfdUdp = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
-        perror("socket creation failed"); 
+    if ((sockfdUdp = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){ 
+        perror("[listenForConnections.h] Failed To Create UDP Knock Listener Socket"); 
         exit(EXIT_FAILURE); 
     } 
     memset(&servaddr, 0, sizeof(servaddr)); 
@@ -72,10 +72,9 @@ inline void listenAndAccept(int port){
     servaddr.sin_family = AF_INET;  
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(port);  
-    if ( bind(sockfdUdp, (const struct sockaddr *)&servaddr,  
-            sizeof(servaddr)) < 0 ) 
+    if (bind(sockfdUdp, (const struct sockaddr *)&servaddr,  sizeof(servaddr)) < 0 ) 
     { 
-        perror("bind failed"); 
+        perror("[listenForConnections.h] Failed To Bind UDP Knock Listener Socket"); 
         exit(EXIT_FAILURE); 
     } 
     char bufferUdp[1024];
@@ -97,9 +96,9 @@ inline void listenAndAccept(int port){
     // }
 
     int bindingReturn = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
-    if (bindingReturn == SOCKET_ERROR) perror("error in binding !");
+    if (bindingReturn == SOCKET_ERROR) perror("[listenForConnections.h] error in binding !");
     int eCodeOnListeningForConnection = listen(serverSocket, 1);
-    if(eCodeOnListeningForConnection!=0) perror("error in listening !");
+    if(eCodeOnListeningForConnection!=0) perror("[listenForConnections.h] error in listening !");
     cout<<bindingReturn<<" and "<<eCodeOnListeningForConnection<<endl;
     
 
@@ -193,11 +192,11 @@ inline void listenAndAccept(int port){
                         auto start = std::chrono::high_resolution_clock::now();
                         int connectedOrNot = connect(ServerSocket, (struct sockaddr*)&connectToInitiator, sizeof(connectToInitiator));
                         auto end = std::chrono::high_resolution_clock::now();
-                        cout << "Connection accepted from "
+                        cout << "[listenForConnections.h] Connection accepted from "
                              << inet_ntoa(connectToInitiator.sin_addr) << " : " 
                              << ntohs(connectToInitiator.sin_port) << "\n";
                              cout.flush();
-                             connected = true;
+                             if (connectedOrNot == 0){connected = true;}
                              acceptConnection = false;
                              newRequest = false;
                              asking = false;
@@ -216,7 +215,7 @@ inline void listenAndAccept(int port){
                             }
                     } 
                     else {
-                        cout << "Connection rejected.\n";
+                        cout << "[listenForConnections.h][listenForConnections.h] Connection rejected by user!\n";
                         newRequest = false;
                         decisionReady = false;
                         acceptConnection = false;

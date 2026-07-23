@@ -22,9 +22,8 @@ ConnectionRequest pendingRequest;
 ServerInfo server{};
 bool connected = false;
 bool exitNow = false;
-bool asking = true;
+bool asking = false;
 bool stopTHIS = false;
-bool listenMode = true;
 string clientIPViaUdp;
 int clientPortViaUdp;
 atomic<bool> stopFlag(false);
@@ -36,14 +35,13 @@ extern DHKeyPair KEYS;
 using namespace std;
 
 
-void listenFinal(EVP_PKEY* publicKey){
+void listenFinal(EVP_PKEY* publicKey, uint16_t port){
 
     //// start
-    int port = 12000;
 
     std::thread listenerThread(listenAndAccept, port);
     
-    while (!exitNow && listenMode){
+    while (!exitNow){
 
         bool requestPending = false;
         ConnectionRequest requestCopy;
@@ -56,7 +54,7 @@ void listenFinal(EVP_PKEY* publicKey){
         }
 
         if(asking && newRequest){
-            cout<<asking<<"new connection request from : "<<clientIPViaUdp<<endl;
+            cout<<asking<<"[listen.h] New connection request from : "<<clientIPViaUdp<<endl;
             cout.flush();
             // acceptConnection = false;
             {
@@ -67,7 +65,7 @@ void listenFinal(EVP_PKEY* publicKey){
                 asking = false;
             }
             cv.notify_one();
-            cout<<"asked main : "<<inet_ntoa(pendingRequest.clientAddr.sin_addr)<<endl;
+            cout<<"[listen.h] Asked whether to connect with : "<<inet_ntoa(pendingRequest.clientAddr.sin_addr)<<endl;
         }
         if(connected){
             cout<<"[listen.h] Connected to : "<<inet_ntoa(CLIENT.clientAddr.sin_addr)<<endl;
@@ -91,7 +89,13 @@ void listenFinal(EVP_PKEY* publicKey){
 
             int bytesSent = send(CLIENT.clientSocket, reinterpret_cast<char*>(&keypayload), sizeof(keypayload), 0);
             int bytesKeySent = sendto(CLIENT.clientSocket, serialized.data(), serialized.size(), 0,(sockaddr*)&CLIENT.clientAddr, sizeof(CLIENT.clientAddr));
+            if (bytesSent != sizeof(keypayload)) {
+                cout<<"[listen.h] Key info not sent!"<<endl;
+            }
 
+            if (bytesKeySent != serialized.size()) {
+                cout<<"[listen.h] Key not sent!"<<endl;
+            }
 
             std::string sharedSecret = deriveSharedSecret(KEYS.privateKey, CLIENT.publicKey);
             std::string sharedSecretFinal = deriveAESKey256(sharedSecret);

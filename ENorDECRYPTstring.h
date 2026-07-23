@@ -24,9 +24,9 @@ std::string serializePublicKeyToString(EVP_PKEY* pubkey) {
         throw std::runtime_error("i2d_PUBKEY failed");
     }
 
-    std::string serialized(len, '\0');  // allocate string with len bytes
+    std::string serialized(len, '\0');
     unsigned char* p = reinterpret_cast<unsigned char*>(serialized.data());
-    i2d_PUBKEY(pubkey, &p);  // serialize into string buffer
+    i2d_PUBKEY(pubkey, &p);
 
     return serialized;
 }

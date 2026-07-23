@@ -20,7 +20,7 @@ int main(int argc, char const *argv[]){
 
 
 
-    listenFinal(KEYS.publicKey);
+    listenFinal(KEYS.publicKey, 12000);
 
 
     
