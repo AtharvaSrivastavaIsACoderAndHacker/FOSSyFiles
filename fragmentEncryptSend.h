@@ -58,7 +58,7 @@ std::string write_metadata_chunk(const FileMetadata& metadata) {
     return meta;
 }
 
-void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT) {
+void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT,std::size_t chunk_size) {
     #ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -75,7 +75,6 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 
     // std::size_t chunk_size = calculateChunkSize(file_size, CLIENT.latencyOfConnection);
     // cin>>chunk_size;
-    std::size_t chunk_size = 100000;
 
 
     std::size_t total_chunks = (file_size + chunk_size - 1) / chunk_size; // number of chunks calc

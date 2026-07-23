@@ -117,7 +117,7 @@ inline void listenAndAccept(int port){
         fcntl(sockfdUdp, F_SETFL, flags | O_NONBLOCK);
         #endif
 
-        int bytesReceivedForIncomingConnections = recvfrom(sockfdUdp, buffer, 1024, 0, (struct sockaddr*)&clientAddrUdp, &clientAddrLen);
+        int bytesReceivedForIncomingConnections = recvfrom(sockfdUdp, buffer, 2048, 0, (struct sockaddr*)&clientAddrUdp, &clientAddrLen);
         if (bytesReceivedForIncomingConnections > 0){
                 if (bytesReceivedForIncomingConnections < sizeof(KnockPacket)) {
                     cout << "Received incomplete packet, ignoring\n";
@@ -132,7 +132,10 @@ inline void listenAndAccept(int port){
                 if (strncmp(pkt->magic, "_____connectionRequestDatagram_____fossyfiles_____", 128) == 0) {
                     {   
                         
-                        
+                        if (bytesReceivedForIncomingConnections < (int)sizeof(KnockPacket)) {
+                            std::cerr << "Packet too small!\n";
+                            return;
+                        }
                         unique_lock<mutex> lock(mtx);
                         clientIPViaUdp = inet_ntoa(clientAddrUdp.sin_addr);
                         clientPortViaUdp = pkt->tcpReturn;
@@ -141,8 +144,7 @@ inline void listenAndAccept(int port){
                         CLIENT.clientAddr = clientAddrUdp;
 
                         uint32_t keyLen = ntohl(pkt->publicKeyLen);
-                        std::string key(keyLen, '\0');
-                        recvfrom(sockfdUdp, key.data(), keyLen, 0,(struct sockaddr*)&clientAddrUdp, &clientAddrLen);
+                        std::string key(buffer + sizeof(KnockPacket), keyLen);
                         CLIENT.publicKey = deserializePublicKeyFromString(key);
                         CLIENT.filePort = pkt->filePort;
                         // cout<<"key received from client"<<endl;

@@ -66,11 +66,12 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
     std::string publicKeyTem = serializePublicKeyToString(publicKey);
     pkt.publicKeyLen = htonl(publicKeyTem.size());
 
-        sendto(udpSock, reinterpret_cast<char*>(&pkt), sizeof(pkt), 0,
-                (sockaddr*)&serverAddr, sizeof(serverAddr));
-        sendto(udpSock, publicKeyTem.data(), publicKeyTem.size(), 0,
-                (sockaddr*)&serverAddr, sizeof(serverAddr));
-                
+    std::vector<char> packet(sizeof(KnockPacket) + publicKeyTem.size());
+    memcpy(packet.data(), &pkt, sizeof(KnockPacket));
+    memcpy(packet.data() + sizeof(KnockPacket),publicKeyTem.data(),publicKeyTem.size());
+
+    int knocked = sendto(udpSock,packet.data(),packet.size(),0,(sockaddr*)&serverAddr,sizeof(serverAddr));
+    cout<<"[connectionInitiator.h] Knocked : "<<knocked<<endl;
     closesocket(udpSock);
 
     peerWhoReceived.filePort = filePort;
