@@ -21,12 +21,10 @@ int main(int argc, char const *argv[]){
     string server_ip;
     cin>>server_ip;
     int port = 12000;
-
-    cout<<KEYS.publicKey<<endl;
     
     connectTo(server_ip, port, 12001, KEYS.publicKey, 12002);
-    cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
 
+    cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
 
 
     defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, "Received\\");

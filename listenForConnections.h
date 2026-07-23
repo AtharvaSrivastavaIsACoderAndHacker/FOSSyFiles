@@ -147,6 +147,7 @@ inline void listenAndAccept(int port){
                         std::string key(buffer + sizeof(KnockPacket), keyLen);
                         CLIENT.publicKey = deserializePublicKeyFromString(key);
                         CLIENT.filePort = pkt->filePort;
+                        
                         // cout<<"key received from client"<<endl;
                         // cout<<"-----------"<<endl;
                         // cout<<key<<endl;
@@ -217,7 +218,7 @@ inline void listenAndAccept(int port){
                             }
                     } 
                     else {
-                        cout << "[listenForConnections.h][listenForConnections.h] Connection rejected by user!\n";
+                        cout << "[listenForConnections.h] Connection rejected by user!\n";
                         newRequest = false;
                         decisionReady = false;
                         acceptConnection = false;

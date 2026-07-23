@@ -58,6 +58,19 @@ std::string write_metadata_chunk(const FileMetadata& metadata) {
     return meta;
 }
 
+bool recvAll(socket_t sock, void *buf, size_t len){
+    char *p = static_cast<char *>(buf);
+    size_t total = 0;
+    while (total < len) {
+        int n = recv(sock, p + total, len - total, 0);
+        if (n <= 0)
+            return false;
+        total += n;
+    }
+
+    return true;
+}
+
 void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT,std::size_t chunk_size) {
     #ifdef _WIN32
     WSADATA wsaData;
@@ -66,7 +79,7 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
  
     std::ifstream in(file_path, std::ios::binary | std::ios::ate);
     if (!in) {
-        std::cerr << "Cannot open file " << file_path << " for reading.\n";
+        std::cerr << "[fragmentEncryptSend.h] Cannot open file " << file_path << " for reading.\n";
         return;
     }
 
@@ -84,26 +97,6 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
    
     std::string meta = write_metadata_chunk(metadata);
     send(receiverSOCKET,meta.c_str(), meta.size(),0);
-
-    socket_t sizeSock = socket(AF_INET, SOCK_STREAM, 0);
-    if(sizeSock == INVALID_SOCKET) {
-        cerr << "Socket creation failed\n";
-    }
-    sockaddr_in clientChunkSizeSender{};
-    clientChunkSizeSender.sin_family = AF_INET;
-    clientChunkSizeSender.sin_port = htons(CLIENT.filePort);
-    #ifdef _WIN32
-        inet_pton(AF_INET, CLIENT.clientIPViaUdp.c_str(), &clientChunkSizeSender.sin_addr);
-    #else
-        clientChunkSizeSender.sin_addr.s_addr = inet_addr(CLIENT.clientIPViaUdp.c_str());
-    #endif
-
-        if(connect(sizeSock, (sockaddr*)&clientChunkSizeSender, sizeof(clientChunkSizeSender)) == SOCKET_ERROR) {
-            cerr << "Connection failed\n";
-            closesocket(sizeSock);
-        }
-
-
     
     // Loop to fragment
     for (std::size_t chunk_index = 0; chunk_index < total_chunks; ++chunk_index) {
@@ -122,7 +115,8 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
         
 
         int size = enc.size();
-        int x = send(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
+        int x = send(receiverSOCKET, reinterpret_cast<char*>(&size), sizeof(size), 0);
+        // int x = send(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
         cout<<"Chunk : "<<chunk_index<<"--->"<<size<<"| Status --> "<<x<<endl;
         
         
@@ -173,41 +167,10 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
             receivedFile.chunkSizeInBytes = std::stoi(info[2]);
             receivedFile.totalChunks = std::stol(info[3]);
             std::getline(ss, leftoverPayload, '\0'); // read rest of stream
-
-
-
-            // socket to receive chunk size 
-                                    #ifdef _WIN32
-                                        WSADATA wsaData;
-                                        WSAStartup(MAKEWORD(2,2), &wsaData);
-                                    #endif
-
-                                        socket_t sizeSockDef = socket(AF_INET, SOCK_STREAM, 0);
-                                        if(sizeSockDef == INVALID_SOCKET) { cerr << "Socket creation failed\n";  }
-
-                                        sockaddr_in sizeSocketAddr{};
-                                        sizeSocketAddr.sin_family = AF_INET;
-                                        sizeSocketAddr.sin_port = htons(filePort);
-                                        sizeSocketAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-                                        if(bind(sizeSockDef, (sockaddr*)&sizeSocketAddr, sizeof(sizeSocketAddr)) == SOCKET_ERROR) {
-                                            cerr << "Bind failed\n"; closesocket(sizeSockDef);
-                                        }
-
-                                        listen(sizeSockDef, 1);
-                                        cout << "Waiting for incoming TCP connection on port " << filePort << "...\n";
-
-                                        sockaddr_in client_addr{};
-                                        socklen_t client_len = sizeof(client_addr);
-                                        socket_t sizeSock = accept(sizeSockDef, (sockaddr*)&client_addr, &client_len);
-                                        if(sizeSock == INVALID_SOCKET) { cerr << "Accept failed\n"; closesocket(sizeSock); }
-
-
-                                    
+                                                
 
 
             // starting to receive file
-
             std::ofstream out(destPath+(receivedFile.fileName), std::ios::binary);
             uint64_t sizes[receivedFile.totalChunks] = {0};
             memset(sizes, 0, sizeof(sizes));
@@ -221,7 +184,8 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
             while (chunksReceived < receivedFile.totalChunks) {
                 if (sizes[chunksReceived] == 0) {
                     int size;
-                    recv(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
+                    recv(socketToReceiveFile, reinterpret_cast<char*>(&size), sizeof(size), 0);
+                    // recv(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
                     sizes[chunksReceived] = size;
                 }
                 if(sizes[chunksReceived] == 0) continue;
@@ -240,7 +204,7 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
                 
                 fragBuffer.erase(fragBuffer.begin(), fragBuffer.begin() + sizes[chunksReceived]);
 
-                cout<<"Chunk : "<<chunksReceived<<"--->"<<sizes[chunksReceived]<<endl;
+                cout<<"[fragmentEncryptSend.h] Chunk : "<<chunksReceived<<"--->"<<sizes[chunksReceived]<<endl;
                 
                 std::string decrypted = aesDecrypt(peerWhoReceived.sharedSecret, encryptedChunk);
                 

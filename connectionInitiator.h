@@ -45,7 +45,7 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
         cerr << "UDP socket creation failed\n";
         return;
     }
-
+    
     sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
     inet_pton(AF_INET, server_ip.c_str(), &serverAddr.sin_addr);
@@ -69,7 +69,7 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
     std::vector<char> packet(sizeof(KnockPacket) + publicKeyTem.size());
     memcpy(packet.data(), &pkt, sizeof(KnockPacket));
     memcpy(packet.data() + sizeof(KnockPacket),publicKeyTem.data(),publicKeyTem.size());
-
+    
     int knocked = sendto(udpSock,packet.data(),packet.size(),0,(sockaddr*)&serverAddr,sizeof(serverAddr));
     cout<<"[connectionInitiator.h] Knocked : "<<knocked<<endl;
     closesocket(udpSock);
@@ -109,7 +109,7 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
         #endif
     }
 
-    cout << "[Initiator] -- Waiting for TCP connection on port " << tcpReturnPort << "...\n";
+    cout << "[ Initiator- connectTo() ] -- Waiting for TCP connection on port " << tcpReturnPort << "...\n";
 
     
     sockaddr_in serverAddr;

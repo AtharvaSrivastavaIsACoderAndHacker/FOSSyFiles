@@ -25,7 +25,8 @@ int main(int argc, char const *argv[]){
 
     
     
-    fragmentEncryptAndSendAFile("sample\\minecraft.png", CLIENT.clientSocket, CLIENTFULL, 100000);
+    fragmentEncryptAndSendAFile("LICENSE", CLIENT.clientSocket, CLIENTFULL, 100000);
+    // fragmentEncryptAndSendAFile("sample\\minecraft.png", CLIENT.clientSocket, CLIENTFULL, 100000);
     // fragmentEncryptAndSendAFile("sample\\montagem_tomada.mp3", CLIENT.clientSocket, CLIENTFULL);
     // fragmentEncryptAndSendAFile("sample\\15th August 2025.mp4", CLIENT.clientSocket, CLIENTFULL);
 
