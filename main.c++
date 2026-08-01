@@ -17,16 +17,15 @@ int main(int argc, char const *argv[]){
 
     
 
-
-
-
     listenFinal(KEYS.publicKey, 12000);
 
 
     
     
-    fragmentEncryptAndSendAFile("LICENSE", CLIENT.clientSocket, CLIENTFULL, 100000);
-    // fragmentEncryptAndSendAFile("sample\\minecraft.png", CLIENT.clientSocket, CLIENTFULL, 100000);
+    // fragmentEncryptAndSendAFile("LICENSE", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("sample/minecraft.png"));
+    // fragmentEncryptAndSendAFile("../../Music/Kabhi Jo Badal Barse (Lyrics)-Arijit Singh [PKgJAV0SuC8].mp3", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("../../Music/Kabhi Jo Badal Barse (Lyrics)-Arijit Singh [PKgJAV0SuC8].mp3"));
+    fragmentEncryptAndSendAFile("/home/Atharva/Videos/archMultitasking.mp4", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("/home/Atharva/Videos/archMultitasking.mp4"));
+    // fragmentEncryptAndSendAFile("sample/minecraft.png", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("sample/minecraft.png"));
     // fragmentEncryptAndSendAFile("sample\\montagem_tomada.mp3", CLIENT.clientSocket, CLIENTFULL);
     // fragmentEncryptAndSendAFile("sample\\15th August 2025.mp4", CLIENT.clientSocket, CLIENTFULL);
 

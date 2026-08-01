@@ -34,11 +34,10 @@ struct ChunkHeader {
 namespace fs = std::filesystem;
 using namespace std;
 
-#define RECVMOREVAL 2048
-
 
 struct FileMetadata {
     std::string file_name;
+    std::string file_checksum;
     std::uintmax_t file_size;
     std::size_t chunk_size;
     std::size_t total_chunks;
@@ -47,31 +46,48 @@ struct FileMetadata {
 std::string write_metadata_chunk(const FileMetadata& metadata) {
     std::ostringstream oss; // Temporary string stream to build metadata string
     std::string meta;
-    oss << "_____metadata_____fossyfiles_____transmissionMetaPacket\n"
+    oss << "_____metadata_____fossyfiles_____transmissionMetaPacket|"
         << "STARTMETA|" 
         << metadata.file_name << "|" 
         << metadata.file_size << "|" 
         << metadata.chunk_size << "|" 
+        << metadata.file_checksum << "|" 
         << metadata.total_chunks << "|ENDMETA|\n\0";
-    meta = oss.str();
+    // meta = oss.str();
+    meta = oss.str().substr(0, 1024);
 
     return meta;
 }
 
-bool recvAll(socket_t sock, void *buf, size_t len){
+int recvAll(socket_t sock, void *buf, size_t len){
     char *p = static_cast<char *>(buf);
     size_t total = 0;
     while (total < len) {
         int n = recv(sock, p + total, len - total, 0);
-        if (n <= 0)
+        if (n <= 0){
             return false;
+        }
         total += n;
+    }
+
+    return total;
+}
+
+bool sendAll(socket_t sock, const void* data, size_t len){
+    const char* p = static_cast<const char*>(data);
+    while (len > 0){
+        int n = send(sock, p, len, 0);
+        if (n <= 0){
+            return false;
+        }
+        p += n;
+        len -= n;
     }
 
     return true;
 }
 
-void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT,std::size_t chunk_size) {
+void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT,std::size_t chunk_size, std::string fileSHA256Checksum) {
     #ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -92,11 +108,14 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 
     std::size_t total_chunks = (file_size + chunk_size - 1) / chunk_size; // number of chunks calc
 
-    FileMetadata metadata{ fs::path(file_path).filename().string(), file_size, chunk_size, total_chunks };
+    FileMetadata metadata{ fs::path(file_path).filename().string(),fileSHA256Checksum, file_size, chunk_size, total_chunks };
 
    
     std::string meta = write_metadata_chunk(metadata);
-    send(receiverSOCKET,meta.c_str(), meta.size(),0);
+    // meta.push_back('\0');
+    sendAll(receiverSOCKET,meta.c_str(), 1024);
+    std::cout<<"Metadata --> "<<meta<<endl;
+    // send(receiverSOCKET,meta.c_str(), meta.size(),0);
     
     // Loop to fragment
     for (std::size_t chunk_index = 0; chunk_index < total_chunks; ++chunk_index) {
@@ -111,16 +130,17 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
         
 
         std::string finalTransmissionChunkString = std::string(buffer.begin(), buffer.end()); // string
+        // cout<<finalTransmissionChunkString<<endl;
         std::string enc = aesEncrypt(CLIENT.sharedSecret,finalTransmissionChunkString);
         
 
         int size = enc.size();
-        int x = send(receiverSOCKET, reinterpret_cast<char*>(&size), sizeof(size), 0);
+        int x = sendAll(receiverSOCKET, reinterpret_cast<char*>(&size), sizeof(size));
         // int x = send(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
         cout<<"Chunk : "<<chunk_index<<"--->"<<size<<"| Status --> "<<x<<endl;
         
         
-        send(receiverSOCKET,enc.data(), enc.size() ,0); // send data that is encrypted !
+        sendAll(receiverSOCKET,enc.data(), enc.size()); // send data that is encrypted !
         
 
 
@@ -135,48 +155,56 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 
 void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFinal peerWhoReceived, int filePort, std::string destPath = "") {
     
-    char buffer[256];
-    int bytesReceived = recv(socketToReceiveFile, buffer, sizeof(buffer) - 1, 0); // receiving the meta chunk, maybe more due to the stream
+    char buffer[1024];
+    
+
+    int bytesReceived = recvAll(socketToReceiveFile,&buffer, 1024);
+    std::cout<<"Metadata --> "<<buffer<<endl;
+
+    // int bytesReceived = recvAll(socketToReceiveFile, buffer, sizeof(buffer) - 1); // receiving the meta chunk, maybe more due to the stream - why the f*** did i do that ? that got me bitching the code for an hour
     string buff(buffer, bytesReceived);
     string metaForVerification;
 
-    std::string leftoverPayload;
-    string info[4];
+    // std::string leftoverPayload;
+    string info[5];
     bool fileValid = false;
     FileInfo receivedFile;
 
     // get metadata parsed
     if(bytesReceived > 0){
         std::stringstream ss(buff);
-        getline(ss, metaForVerification);
+        getline(ss, metaForVerification, '|');
         if(metaForVerification == "_____metadata_____fossyfiles_____transmissionMetaPacket"){ // if its the valid meta chunk from a fellow FOSSyFiles instance
             fileValid = true;
-            getline(ss, metaForVerification);
+            // getline(ss, metaForVerification, '|'); // now metaForVerification contains the metadata STARTMETA
             string segment;
             int count = 0;
-            std::stringstream ssMeta(metaForVerification);
+            // std::stringstream ssMeta(metaForVerification);
             
-            while (std::getline(ssMeta, segment, '|')) {
+            while (std::getline(ss, segment, '|')) {
                 if(segment == "STARTMETA") continue;
                 if(segment == "ENDMETA") break;
                 info[count] = segment;
                 count++;
             }
+
             receivedFile.fileName = info[0];
             receivedFile.fileSizeInBytes = std::stol(info[1]);
             receivedFile.chunkSizeInBytes = std::stoi(info[2]);
-            receivedFile.totalChunks = std::stol(info[3]);
-            std::getline(ss, leftoverPayload, '\0'); // read rest of stream
-                                                
+            receivedFile.checksum = info[3];
+            receivedFile.totalChunks = std::stol(info[4]);
+            // std::getline(ss, leftoverPayload, '\0'); // read the rest of the stream
 
 
             // starting to receive file
-            std::ofstream out(destPath+(receivedFile.fileName), std::ios::binary);
+            
+            std::string filePath = destPath+(receivedFile.fileName);
+            std::ofstream out(filePath, std::ios::binary);
             uint64_t sizes[receivedFile.totalChunks] = {0};
             memset(sizes, 0, sizeof(sizes));
             
             std::vector<unsigned char> fragBuffer;
-            fragBuffer.insert(fragBuffer.end(), leftoverPayload.begin(), leftoverPayload.end());
+            // fragBuffer.insert(fragBuffer.end(), leftoverPayload.begin(), leftoverPayload.end());
             
 
             
@@ -184,16 +212,17 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
             while (chunksReceived < receivedFile.totalChunks) {
                 if (sizes[chunksReceived] == 0) {
                     int size;
-                    recv(socketToReceiveFile, reinterpret_cast<char*>(&size), sizeof(size), 0);
+                    recvAll(socketToReceiveFile, reinterpret_cast<char*>(&size), sizeof(size));
                     // recv(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
                     sizes[chunksReceived] = size;
                 }
                 if(sizes[chunksReceived] == 0) continue;
 
                 
-                if (fragBuffer.size() < sizes[chunksReceived]) {
-                    char tmp[RECVMOREVAL];
-                    int n = recv(socketToReceiveFile, tmp, sizeof(tmp), 0);
+                if (fragBuffer.size() < sizes[chunksReceived]){
+                    // char tmp[RECVMOREVAL]; // this shit is hilarious,cosmic level stupidity ! i mean i sent all sizes and shit but have always used a static size since ?????
+                    char tmp[sizes[chunksReceived]];
+                    int n = recvAll(socketToReceiveFile, tmp, sizeof(tmp));
                     if (n <= 0) return;
                     fragBuffer.insert(fragBuffer.end(), tmp, tmp + n);
                     continue;
@@ -207,15 +236,30 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
                 cout<<"[fragmentEncryptSend.h] Chunk : "<<chunksReceived<<"--->"<<sizes[chunksReceived]<<endl;
                 
                 std::string decrypted = aesDecrypt(peerWhoReceived.sharedSecret, encryptedChunk);
+                // cout<<decrypted<<endl;
                 
                 out.write(decrypted.data(), decrypted.size());
                 
                 
                 chunksReceived++;
+
+                
+                // for(int i = 0; i<receivedFile.totalChunks; i++){
+                //     cout<<sizes[i]<<endl;
+                // }
             }
 
             out.close();
             std::cout << "[Receiver] File reconstructed successfully\n";
+
+            
+            if(calculate_file_sha256(filePath) == receivedFile.checksum){
+                cout<<"Checksums Match ! Transmission Pure and Successful !"<<endl;
+            }
+            else{
+                cout<<"We're doomed ! Hey Bhagwan another damn bug ! Laao kala hit !!"<<endl;
+
+            }
 
 
 

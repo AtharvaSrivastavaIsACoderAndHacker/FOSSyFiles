@@ -14,6 +14,9 @@
     #include <openssl/rsa.h>
     #include <openssl/err.h>
     #include <stdexcept>
+
+
+    #define slash "\\"
 #else
     #include <sys/types.h>
     #include <openssl/evp.h>
@@ -21,6 +24,9 @@
     #include <netinet/in.h>
     #include <arpa/inet.h>
     #include <unistd.h>
+
+    
+    #define slash "/"
 #endif
 
 #pragma pack(push, 1)
@@ -54,6 +60,7 @@ struct ConnectionFinal {
 
 struct FileInfo {
     std::string fileName;
+    std::string checksum;
     long fileSizeInBytes;
     int chunkSizeInBytes;
     long totalChunks;

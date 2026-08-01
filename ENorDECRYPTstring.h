@@ -3,13 +3,17 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
-#include <string>
-#include <stdexcept>
 #include <openssl/x509.h>
-#include <string>
-#include <stdexcept>
 #include <openssl/rand.h>
+#include <string>
 #include <cstring>
+#include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <iomanip>
+#include <sstream>
+#include <memory>
 
 
 #ifndef sharedStructsIncluded
@@ -137,4 +141,51 @@ std::string aesDecrypt(const std::string& aesKey, const std::string& encrypted) 
 
     EVP_CIPHER_CTX_free(ctx);
     return out;
+}
+
+// Helper to manage EVP_MD_CTX lifetime automatically via RAII
+using EVP_MD_CTX_ptr = std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)>;
+
+std::string calculate_file_sha256(const std::string& filepath) {
+    // Open the file in binary mode
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file.is_open()) {
+        return "Error: Could not open file.";
+    }
+
+    // Initialize OpenSSL EVP Context
+    EVP_MD_CTX_ptr ctx(EVP_MD_CTX_new(), EVP_MD_CTX_free);
+    if (!ctx) {
+        return "Error: Failed to create EVP context.";
+    }
+
+    // Set context to use SHA256
+    if (EVP_DigestInit_ex(ctx.get(), EVP_sha256(), nullptr) != 1) {
+        return "Error: Failed to initialize SHA256.";
+    }
+
+    // Stream the file in 4KB chunks
+    constexpr size_t buffer_size = 4096;
+    std::vector<char> buffer(buffer_size);
+
+    while (file.read(buffer.data(), buffer_size) || file.gcount() > 0) {
+        if (EVP_DigestUpdate(ctx.get(), buffer.data(), file.gcount()) != 1) {
+            return "Error: Failed to update hash.";
+        }
+    }
+
+    // Finalize the hash computation
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hash_len = 0;
+    if (EVP_DigestFinal_ex(ctx.get(), hash, &hash_len) != 1) {
+        return "Error: Failed to finalize hash.";
+    }
+
+    // Convert the binary hash to a lowercase hexadecimal string
+    std::stringstream ss;
+    for (unsigned int i = 0; i < hash_len; ++i) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
+    }
+
+    return ss.str();
 }

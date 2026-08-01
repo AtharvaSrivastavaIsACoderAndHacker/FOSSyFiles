@@ -1,5 +1,5 @@
-fix the fking bug, --> one that prevents orderly and properly delimited streaming of chunk sizes and chunks through the same socket, 
-build a proper delimitation(not the Delimitation Bill, delimitation as in seperators/programming) system to orderly send and receive chunks and sizes
-maybe send chunk sizes over the first knock packet
+worksssssss yayyyyyyyyyyyyyy
 
-- 23rd July 2026 21:20
+
+
+but a dynamic chunk size calculator would be awesome
