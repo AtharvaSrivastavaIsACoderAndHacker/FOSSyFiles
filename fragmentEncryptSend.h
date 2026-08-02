@@ -46,7 +46,7 @@ struct FileMetadata {
 };
 
 std::string write_metadata_chunk(const FileMetadata& metadata) {
-    std::ostringstream oss; // Temporary string stream to build metadata string
+    std::ostringstream oss;
     std::string meta;
     oss << "_____metadata_____fossyfiles_____transmissionMetaPacket|"
         << "STARTMETA|" 
@@ -55,7 +55,6 @@ std::string write_metadata_chunk(const FileMetadata& metadata) {
         << metadata.chunk_size << "|" 
         << metadata.file_checksum << "|" 
         << metadata.total_chunks << "|ENDMETA|\n\0";
-    // meta = oss.str();
     meta = oss.str().substr(0, 1024);
 
     return meta;
@@ -104,27 +103,18 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
     std::uintmax_t file_size = in.tellg();
     in.seekg(0, std::ios::beg);
 
-    // std::size_t chunk_size = calculateChunkSize(file_size, CLIENT.latencyOfConnection);
-    // cin>>chunk_size;
-
-
     std::size_t total_chunks = (file_size + chunk_size - 1) / chunk_size; // number of chunks calc
 
     FileMetadata metadata{ fs::path(file_path).filename().string(),fileSHA256Checksum, file_size, chunk_size, total_chunks };
 
    
     std::string meta = write_metadata_chunk(metadata);
-    // meta.push_back('\0');
     sendAll(receiverSOCKET,meta.c_str(), 1024);
     std::cout<<"Metadata --> "<<meta<<endl;
-    // send(receiverSOCKET,meta.c_str(), meta.size(),0);
     
     // Loop to fragment
     for (std::size_t chunk_index = 0; chunk_index < total_chunks; ++chunk_index) {
 
-        
-        
-        
         std::vector<char> buffer(chunk_size);
         in.read(buffer.data(), chunk_size);
         std::streamsize bytes_read = in.gcount(); 
@@ -132,21 +122,14 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
         
 
         std::string finalTransmissionChunkString = std::string(buffer.begin(), buffer.end()); // string
-        // cout<<finalTransmissionChunkString<<endl;
         std::string enc = aesEncrypt(CLIENT.sharedSecret,finalTransmissionChunkString);
         
 
         int size = enc.size();
         int x = sendAll(receiverSOCKET, reinterpret_cast<char*>(&size), sizeof(size));
-        // int x = send(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
         cout<<"Chunk : "<<chunk_index<<"--->"<<size<<"| Status --> "<<x<<endl;
         
-        
         sendAll(receiverSOCKET,enc.data(), enc.size()); // send data that is encrypted !
-        
-
-
-
 
     }
     std::cout << "File fragmented into " << total_chunks << " chunks sent to  " << receiverSOCKET << "\n";
@@ -158,16 +141,14 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 bool defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFinal peerWhoReceived, int filePort, std::string destPath = "") {
     
     char buffer[1024];
-    
 
     int bytesReceived = recvAll(socketToReceiveFile,&buffer, 1024);
     std::cout<<"Metadata --> "<<buffer<<endl;
 
-    // int bytesReceived = recvAll(socketToReceiveFile, buffer, sizeof(buffer) - 1); // receiving the meta chunk, maybe more due to the stream - why the f*** did i do that ? that got me bitching the code for an hour
+    // int bytesReceived = recvAll(socketToReceiveFile, buffer, sizeof(buffer) - 1); // receiving the meta chunk, maybe more due to the stream ----->    why the f*** did i do that ? that got me bitching the code for an hour
     string buff(buffer, bytesReceived);
     string metaForVerification;
 
-    // std::string leftoverPayload;
     string info[5];
     bool fileValid = false;
     
@@ -178,10 +159,8 @@ bool defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
         getline(ss, metaForVerification, '|');
         if(metaForVerification == "_____metadata_____fossyfiles_____transmissionMetaPacket"){ // if its the valid meta chunk from a fellow FOSSyFiles instance
             fileValid = true;
-            // getline(ss, metaForVerification, '|'); // now metaForVerification contains the metadata STARTMETA
             string segment;
             int count = 0;
-            // std::stringstream ssMeta(metaForVerification);
             
             while (std::getline(ss, segment, '|')) {
                 if(segment == "STARTMETA") continue;
@@ -195,27 +174,21 @@ bool defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
             receivedFile.chunkSizeInBytes = std::stoi(info[2]);
             receivedFile.checksum = info[3];
             receivedFile.totalChunks = std::stol(info[4]);
-            // std::getline(ss, leftoverPayload, '\0'); // read the rest of the stream
-
+            
 
             // starting to receive file
-            
             std::string filePath = destPath+(receivedFile.fileName);
             std::ofstream out(filePath, std::ios::binary);
             uint64_t sizes[receivedFile.totalChunks] = {0};
             memset(sizes, 0, sizeof(sizes));
             
             std::vector<unsigned char> fragBuffer;
-            // fragBuffer.insert(fragBuffer.end(), leftoverPayload.begin(), leftoverPayload.end());
-            
-
             
             size_t chunksReceived = 0;
             while (chunksReceived < receivedFile.totalChunks) {
                 if (sizes[chunksReceived] == 0) {
                     int size;
                     recvAll(socketToReceiveFile, reinterpret_cast<char*>(&size), sizeof(size));
-                    // recv(sizeSock, reinterpret_cast<char*>(&size), sizeof(size), 0);
                     sizes[chunksReceived] = size;
                 }
                 if(sizes[chunksReceived] == 0) continue;
@@ -240,17 +213,11 @@ bool defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
                 cout<<"[fragmentEncryptSend.h] Chunk : "<<chunksReceived<<"--->"<<sizes[chunksReceived]<<endl;
                 
                 std::string decrypted = aesDecrypt(peerWhoReceived.sharedSecret, encryptedChunk);
-                // cout<<decrypted<<endl;
                 
                 out.write(decrypted.data(), decrypted.size());
                 
                 
                 chunksReceived++;
-
-                
-                // for(int i = 0; i<receivedFile.totalChunks; i++){
-                //     cout<<sizes[i]<<endl;
-                // }
             }
 
             out.close();
@@ -266,14 +233,7 @@ bool defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
                 return false;
 
             }
-
-
-
-
-
         }
     }
-
     return false;
-
 }

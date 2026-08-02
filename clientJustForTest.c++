@@ -5,8 +5,6 @@ using namespace std;
 
 
 int main(int argc, char const *argv[]){
-
-
     
     #ifdef _WIN32
     // Windows needs WSAStartup/WSACleanup
@@ -34,34 +32,11 @@ int main(int argc, char const *argv[]){
         std::ofstream out("logs.txt", std::ios::app);
         std::string log = receivedFile.fileName+" "+std::to_string(receivedFile.fileSizeInBytes)+" "+std::to_string(receivedFile.chunkSizeInBytes)+" "+std::to_string(receivedFile.totalChunks)+" "+std::to_string(duration.count())+"  \n";
         out.write(log.data(), log.size());
-    }
-    
-    
-    
-    
-    
-    // defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, "./");
- 
-    // // a very simple chat receiver
-    // cout<<"Receiving..."<<endl;
-    // while (1){ 
-    //     char buffer[256];
-    //     int bytesReceived = recv(peerWhoReceived.peerSocket, buffer, sizeof(buffer) - 1, 0);
-    //     if(bytesReceived > 0){
-    //         cout << "Received from server: " << buffer << "\n";
-    //         cout.flush();
-    //     }
-    // }
-
-
-
-
-    
+    }    
     
     #ifdef _WIN32
     WSACleanup();
     #endif
-    
     
     return 0;
 }

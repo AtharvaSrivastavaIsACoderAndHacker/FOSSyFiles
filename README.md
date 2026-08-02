@@ -7,7 +7,7 @@ Are you a damn teenager who can't afford a NAS ?
 
 We have (will have) a solution to our miseries !
 
-Damn, im not that dramatic, it's just that i had nothing to write in this readme currently --> once comleted, you'll have the comlete descrition of the software uloaded here
+Damn, im not that dramatic, it's just that i had nothing to write in this readme currently --> once completed, you'll have the complete description of the software uploaded here
 
 
 

@@ -91,9 +91,6 @@ inline void listenAndAccept(int port){
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    // if (inet_pton(AF_INET, server_ip.c_str(), &serverAddress.sin_addr) <= 0) {
-    //     cerr << "Invalid server IP address: " << server_ip << "\n";
-    // }
 
     int bindingReturn = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     if (bindingReturn == SOCKET_ERROR) perror("[listenForConnections.h] error in binding !");
@@ -101,12 +98,6 @@ inline void listenAndAccept(int port){
     if(eCodeOnListeningForConnection!=0) perror("[listenForConnections.h] error in listening !");
     cout<<bindingReturn<<" and "<<eCodeOnListeningForConnection<<endl;
     
-
-
-
-
-
-
 
     while (!stopListening.load()) {
         #ifdef _WIN32
@@ -124,9 +115,6 @@ inline void listenAndAccept(int port){
                     continue;
                 }
                 KnockPacket* pkt = reinterpret_cast<KnockPacket*>(buffer);
-                // cout<<"Received a Valid FossyDatagram"<<endl;
-                // cout<<pkt->magic<<endl;
-                // cout<<pkt->tcpReturn<<endl;
 
                 // if FOSSyFiles sent this :
                 if (strncmp(pkt->magic, "_____connectionRequestDatagram_____fossyfiles_____", 128) == 0) {
@@ -147,12 +135,6 @@ inline void listenAndAccept(int port){
                         std::string key(buffer + sizeof(KnockPacket), keyLen);
                         CLIENT.publicKey = deserializePublicKeyFromString(key);
                         CLIENT.filePort = pkt->filePort;
-                        
-                        // cout<<"key received from client"<<endl;
-                        // cout<<"-----------"<<endl;
-                        // cout<<key<<endl;
-                        // cout<<"-----------"<<endl;
-
                     }
                     cout<<buffer<<endl;
                 } 
@@ -164,8 +146,6 @@ inline void listenAndAccept(int port){
         
 
         if (newRequest){
-            // cout<<"log from listener header, 1 request came from a client !"<<inet_ntoa(clientAddrUdp.sin_addr)<<endl;
-
                 // ask main thread to respond to this
                 {   
                     unique_lock<mutex> lock(mtx);
@@ -184,8 +164,6 @@ inline void listenAndAccept(int port){
                     
                     if (acceptConnection) {
                         int ServerSocket = socket(AF_INET, SOCK_STREAM, 0);
-                        // clientIPViaUdp = inet_ntoa(clientAddrUdp.sin_addr);
-                        // clientPortViaUdp = pkt->tcpReturn;
                         cout<<clientPortViaUdp<<endl;
                         cout<<clientIPViaUdp<<endl;
                         
@@ -234,7 +212,7 @@ inline void listenAndAccept(int port){
 
     server.serverAddress = serverAddress;
     server.serverSocket = serverSocket;
-    // end of while loop
+    // end of the while loop
 }
 
 

@@ -37,8 +37,6 @@ using namespace std;
 
 void listenFinal(EVP_PKEY* publicKey, uint16_t port){
 
-    //// start
-
     std::thread listenerThread(listenAndAccept, port);
     
     while (!exitNow){
@@ -49,14 +47,13 @@ void listenFinal(EVP_PKEY* publicKey, uint16_t port){
         
         if (newRequest) {
             requestPending = true;
-            requestCopy = pendingRequest; // copy the data safely
+            requestCopy = pendingRequest;
         }
         }
 
         if(asking && newRequest){
             cout<<asking<<"[listen.h] New connection request from : "<<clientIPViaUdp<<endl;
             cout.flush();
-            // acceptConnection = false;
             {
                 lock_guard<mutex> lock(mtx);
                 cin>>acceptConnection;
@@ -111,14 +108,7 @@ void listenFinal(EVP_PKEY* publicKey, uint16_t port){
             cv.notify_all();
             listenerThread.join();
             break;
-
-
-
-
         }
         
     }
-
-
-    
 }

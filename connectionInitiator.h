@@ -124,11 +124,6 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
     }
 
 
-
-
-
-
-
     //////// RECEIVE KEY
     KnockPacket pkt{};
     size_t totalReceived = 0;
@@ -161,14 +156,7 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
     peerWhoReceived.sharedSecret = sharedSecretFinal;
     peerWhoReceived.latencyOfConnection = pkt.latencyOfConnection;
 
-    
-
     /////////// done
-
-
-
-
-
 
     cout << inet_ntoa(serverAddr.sin_addr) << ": Has Agreed to Connect To You Via tcp on port : "
          << ntohs(serverAddr.sin_port) << "\n"
