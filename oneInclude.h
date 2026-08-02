@@ -12,4 +12,6 @@
 #include "sharedStructs.h"
 #endif
 
+inline FileInfo receivedFile;
+
 DHKeyPair KEYS = generateDHKeyPair();

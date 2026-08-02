@@ -1,7 +1,6 @@
 #include"oneInclude.h"
 extern atomic<bool> stopFlag;
 
-
 using namespace std;
 
 
@@ -27,13 +26,21 @@ int main(int argc, char const *argv[]){
     cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
 
 
-    defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, std::string("Received")+slash);
+    auto start = std::chrono::steady_clock::now();
+    bool success = defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, std::string("Received")+slash);
+    auto end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    if(success){
+        std::ofstream out("logs.txt", std::ios::app);
+        std::string log = receivedFile.fileName+" "+std::to_string(receivedFile.fileSizeInBytes)+" "+std::to_string(receivedFile.chunkSizeInBytes)+" "+std::to_string(receivedFile.totalChunks)+" "+std::to_string(duration.count())+"  \n";
+        out.write(log.data(), log.size());
+    }
+    
+    
+    
+    
+    
     // defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, "./");
-
-
-
-
-
  
     // // a very simple chat receiver
     // cout<<"Receiving..."<<endl;

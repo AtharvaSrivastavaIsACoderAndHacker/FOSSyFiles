@@ -20,11 +20,20 @@ int main(int argc, char const *argv[]){
     listenFinal(KEYS.publicKey, 12000);
 
 
-    
-    
+    std::string path = "/home/Atharva/Desktop/archlinux-x86_64.iso";
+    int chunkSize;
+    // cout<<"Enter Path To File :";
+    // cin>>path;
+    // cout<<endl;
+    cout<<"Enter ChunkSize:";
+    cin>>chunkSize;
+    cout<<endl;
+    fragmentEncryptAndSendAFile(path, CLIENT.clientSocket, CLIENTFULL, chunkSize, calculate_file_sha256(path));
+
+    // fragmentEncryptAndSendAFile("/home/Atharva/Desktop/archlinux-x86_64.iso", CLIENT.clientSocket, CLIENTFULL, 10000000, calculate_file_sha256("/home/Atharva/Desktop/archlinux-x86_64.iso"));
     // fragmentEncryptAndSendAFile("LICENSE", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("sample/minecraft.png"));
     // fragmentEncryptAndSendAFile("../../Music/Kabhi Jo Badal Barse (Lyrics)-Arijit Singh [PKgJAV0SuC8].mp3", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("../../Music/Kabhi Jo Badal Barse (Lyrics)-Arijit Singh [PKgJAV0SuC8].mp3"));
-    fragmentEncryptAndSendAFile("/home/Atharva/Videos/archMultitasking.mp4", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("/home/Atharva/Videos/archMultitasking.mp4"));
+    // fragmentEncryptAndSendAFile("/home/Atharva/Videos/archMultitasking.mp4", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("/home/Atharva/Videos/archMultitasking.mp4"));
     // fragmentEncryptAndSendAFile("sample/minecraft.png", CLIENT.clientSocket, CLIENTFULL, 100000, calculate_file_sha256("sample/minecraft.png"));
     // fragmentEncryptAndSendAFile("sample\\montagem_tomada.mp3", CLIENT.clientSocket, CLIENTFULL);
     // fragmentEncryptAndSendAFile("sample\\15th August 2025.mp4", CLIENT.clientSocket, CLIENTFULL);

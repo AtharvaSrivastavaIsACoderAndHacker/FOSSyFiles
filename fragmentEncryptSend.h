@@ -34,6 +34,8 @@ struct ChunkHeader {
 namespace fs = std::filesystem;
 using namespace std;
 
+extern FileInfo receivedFile;
+
 
 struct FileMetadata {
     std::string file_name;
@@ -153,7 +155,7 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 
 
 
-void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFinal peerWhoReceived, int filePort, std::string destPath = "") {
+bool defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFinal peerWhoReceived, int filePort, std::string destPath = "") {
     
     char buffer[1024];
     
@@ -168,7 +170,7 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
     // std::string leftoverPayload;
     string info[5];
     bool fileValid = false;
-    FileInfo receivedFile;
+    
 
     // get metadata parsed
     if(bytesReceived > 0){
@@ -221,11 +223,13 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
                 
                 if (fragBuffer.size() < sizes[chunksReceived]){
                     // char tmp[RECVMOREVAL]; // this shit is hilarious,cosmic level stupidity ! i mean i sent all sizes and shit but have always used a static size since ?????
-                    char tmp[sizes[chunksReceived]];
-                    int n = recvAll(socketToReceiveFile, tmp, sizeof(tmp));
-                    if (n <= 0) return;
+                    // char tmp[sizes[chunksReceived]];
+                    char *tmp = (char *)malloc(sizes[chunksReceived] * sizeof(char));
+                    int n = recvAll(socketToReceiveFile, tmp, sizes[chunksReceived] * sizeof(char));
+                    if (n <= 0) return false;
                     fragBuffer.insert(fragBuffer.end(), tmp, tmp + n);
                     continue;
+                    free(tmp);
                 }
 
                 if(sizes[chunksReceived] == 0) continue;
@@ -255,9 +259,11 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
             
             if(calculate_file_sha256(filePath) == receivedFile.checksum){
                 cout<<"Checksums Match ! Transmission Pure and Successful !"<<endl;
+                return true;
             }
             else{
                 cout<<"We're doomed ! Hey Bhagwan another damn bug ! Laao kala hit !!"<<endl;
+                return false;
 
             }
 
@@ -268,6 +274,6 @@ void defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFin
         }
     }
 
-
+    return false;
 
 }
