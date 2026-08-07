@@ -88,7 +88,7 @@ bool sendAll(socket_t sock, const void* data, size_t len){
     return true;
 }
 
-void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT,std::size_t chunk_size, std::string fileSHA256Checksum) {
+void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT, std::string fileSHA256Checksum) {
     #ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -102,6 +102,10 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 
     std::uintmax_t file_size = in.tellg();
     in.seekg(0, std::ios::beg);
+
+    size_t chunk_size = calculateChunkSize(file_size,CLIENT.latencyOfConnection);
+    cout<<"CHUNK SIZE --> "<<chunk_size<<endl;
+    cout.flush();
 
     std::size_t total_chunks = (file_size + chunk_size - 1) / chunk_size; // number of chunks calc
 

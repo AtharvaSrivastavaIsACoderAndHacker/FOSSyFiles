@@ -99,19 +99,19 @@ size_t calculateChunkSize(size_t fileSize, int rttMs) {
     uint64_t freeRAM = getAvailableRAM();
     double cpuUsage = getCPUUsage();
 
-    size_t baseChunk = std::min(fileSize, freeRAM / 50);
+    size_t baseChunk = std::min(fileSize, freeRAM / 10);
 
     baseChunk = static_cast<size_t>(baseChunk * (1.0 - cpuUsage / 100.0));
 
     // latency based adjustment 
     if(rttMs > 100) baseChunk = std::min(baseChunk, static_cast<size_t>(10000));   // bad latency == small chunks
-    else if(rttMs > 50) baseChunk = std::min(baseChunk, static_cast<size_t>(500000)); // moderate latency
-    else if(rttMs < 5) baseChunk = std::min(baseChunk * 4, static_cast<size_t>(10485760)); // best latency ---> 10 MB
-    else if(rttMs < 40) baseChunk = std::min(baseChunk * 2, static_cast<size_t>(10485760)); // good latency → up to 10 MB
+    else if(rttMs > 50) baseChunk = std::min(baseChunk, static_cast<size_t>(50000)); // moderate latency
+    else if(rttMs < 40) baseChunk = std::min(baseChunk * 2, static_cast<size_t>(1048576)); // good latency → up to 10 MB
+    else if(rttMs < 5) baseChunk = std::min(baseChunk * 4, static_cast<size_t>(10000000)); // best latency ---> 10 MB
 
     // limits
     if(baseChunk < 10000) baseChunk = 10000;           // min 10 KB
-    if(baseChunk > 100000) baseChunk = 100000;     // max 100 KB
+    if(baseChunk > 10000000) baseChunk = 10000000;     // max 10 MB
 
     return baseChunk;
 }
