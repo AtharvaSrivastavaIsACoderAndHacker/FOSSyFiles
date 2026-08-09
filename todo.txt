@@ -2,4 +2,10 @@ worksssssss yayyyyyyyyyyyyyy
 
 
 
-but a dynamic chunk size calculator would be awesome
+i think currently:-
+
+    vm cross device doesn't work --> i think it's a vm issue
+
+    cross-platform works i think, cuz VMs failed the same way either windows 8.1 or mint
+
+    cross device has to be checked
