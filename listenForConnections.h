@@ -173,10 +173,10 @@ inline void listenAndAccept(int port){
                         auto start = std::chrono::high_resolution_clock::now();
                         int connectedOrNot = connect(ServerSocket, (struct sockaddr*)&connectToInitiator, sizeof(connectToInitiator));
                         auto end = std::chrono::high_resolution_clock::now();
-                        cout << "[listenForConnections.h] Connection accepted from "
-                             << inet_ntoa(connectToInitiator.sin_addr) << " : " 
-                             << ntohs(connectToInitiator.sin_port) << "\n";
-                             cout.flush();
+                        // cout << "[listenForConnections.h] Connection accepted from "
+                        //      << inet_ntoa(connectToInitiator.sin_addr) << " : " 
+                        //      << ntohs(connectToInitiator.sin_port) << "\n";
+                        //      cout.flush();
                              if (connectedOrNot == 0){connected = true;}
                              acceptConnection = false;
                              newRequest = false;
