@@ -80,6 +80,10 @@ void udpKnocker(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKE
 
 
 void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY* publicKey, int filePort){
+
+    in_addr expectedIP{};
+    inet_pton(AF_INET, server_ip.c_str(), &expectedIP);
+
     thread knockThread(udpKnocker, server_ip, udpPort, tcpReturnPort, publicKey, filePort);
 
     socket_t listenSock = socket(AF_INET, SOCK_STREAM, 0);
@@ -122,6 +126,14 @@ void connectTo(const string& server_ip, int udpPort, int tcpReturnPort, EVP_PKEY
         perror("[Initiator] -- Return Accept failed -- linux ");
         #endif
     }
+    if (serverAddr.sin_addr.s_addr != expectedIP.s_addr) {
+        cout << "Unexpected peer IP!\n";
+        closesocket(tcpSock);
+        return;
+    }
+
+
+    
 
 
     //////// RECEIVE KEY

@@ -6,14 +6,7 @@ using namespace std;
 
 int main(int argc, char const *argv[]){
     
-    #ifdef _WIN32
-    // Windows needs WSAStartup/WSACleanup
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
-        std::cerr << "WSAStartup failed\n";
-        return 1;
-    }
-    #endif
+    windowsWSAInitNClean(0); // init
 
     string server_ip;
     cin>>server_ip;
@@ -34,9 +27,7 @@ int main(int argc, char const *argv[]){
         out.write(log.data(), log.size());
     }    
     
-    #ifdef _WIN32
-    WSACleanup();
-    #endif
+    windowsWSAInitNClean(1); // clear
     
     return 0;
 }

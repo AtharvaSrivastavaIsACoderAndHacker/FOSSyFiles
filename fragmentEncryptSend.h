@@ -89,10 +89,8 @@ bool sendAll(socket_t sock, const void* data, size_t len){
 }
 
 void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT, std::string fileSHA256Checksum) {
-    #ifdef _WIN32
-    WSADATA wsaData;
-    WSAStartup(MAKEWORD(2,2), &wsaData);
-    #endif
+    
+    windowsWSAInitNClean(0);
  
     std::ifstream in(file_path, std::ios::binary | std::ios::ate);
     if (!in) {

@@ -5,14 +5,11 @@ using namespace std;
  
 int main(int argc, char const *argv[]){
 
-    #ifdef _WIN32
-    // Windows needs WSAStartup/WSACleanup
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
-        std::cerr << "WSAStartup failed\n";
-        return 1;
-    }
-    #endif
+    windowsWSAInitNClean(0); // init
+
+    // call broadcaster and receiver
+    // call gui
+
 
     listenFinal(KEYS.publicKey, 12000);
 
@@ -21,9 +18,7 @@ int main(int argc, char const *argv[]){
     fragmentEncryptAndSendAFile(path, CLIENT.clientSocket, CLIENTFULL, calculate_file_sha256(path));    
 
 
-    #ifdef _WIN32
-    WSACleanup();
-    #endif
+    windowsWSAInitNClean(0); // clear
 
     return 0;
 }
