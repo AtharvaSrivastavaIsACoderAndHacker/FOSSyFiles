@@ -1,13 +1,19 @@
-std::vector<DiscoveredDeviceInfo> discoveredDevices = {};
-mutex broadcasterMtx;
-condition_variable broadcasterCV;
-atomic<bool> haltReceiving = false;
-atomic<bool> haltSending = false;
-atomic<bool> stopAndCloseAll = false;
-
-
 #include <atomic>
 #include <vector>
+#include <mutex>
+#include <condition_variable>
+
+#ifndef sharedStructsIncluded
+#include "sharedStructs.h"
+#endif
+
+std::vector<DiscoveredDeviceInfo> discoveredDevices = {};
+std::mutex broadcasterMtx;
+std::condition_variable broadcasterCV;
+std::atomic<bool> haltReceiving = false;
+std::atomic<bool> haltSending = false;
+std::atomic<bool> stopAndCloseAll = false;
+
 #include "connectionInitiator.h"
 #include "listen.h"
  
@@ -16,9 +22,6 @@ atomic<bool> stopAndCloseAll = false;
 #endif
 #ifndef keyGenHeaderIncluded
 #include "RSA_keygen.h"
-#endif
-#ifndef sharedStructsIncluded
-#include "sharedStructs.h"
 #endif
 #ifndef guiIncluded
 #include "gui.h"

@@ -10,9 +10,9 @@ using namespace std;
 extern std::vector<DiscoveredDeviceInfo> discoveredDevices; // defined in oneInclude.h
 extern mutex broadcasterMtx;
 extern condition_variable broadcasterCV;
-extern bool haltReceiving;
-extern bool haltSending;
-extern bool stopAndCloseAll;
+extern std::atomic<bool> haltReceiving;
+extern std::atomic<bool> haltSending;
+extern std::atomic<bool> stopAndCloseAll;
 
 
 std::string get_local_lan_ip() {

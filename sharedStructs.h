@@ -6,6 +6,7 @@
 
 
 #include <cstdint>
+#include <iostream>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -110,7 +111,6 @@ inline void windowsWSAInitNClean(int mode){
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
             std::cerr << "WSAStartup failed\n";
-            return 1;
         }
         #endif
         return;
