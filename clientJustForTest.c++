@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]){
     auto end = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     if(success){
-        std::ofstream out("logs.txt", std::ios::app);
+        std::ofstream out("textFiles/logs.txt", std::ios::app);
         std::string log = receivedFile.fileName+" "+std::to_string(receivedFile.fileSizeInBytes)+" "+std::to_string(receivedFile.chunkSizeInBytes)+" "+std::to_string(receivedFile.totalChunks)+" "+std::to_string(duration.count())+"  \n";
         out.write(log.data(), log.size());
     }    

@@ -138,8 +138,6 @@ void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiver
 
 }
 
-
-
 bool defragmentDecryptAndReceiveAFile(socket_t socketToReceiveFile,ConnectionFinal peerWhoReceived, int filePort, std::string destPath = "") {
     
     char buffer[1024];

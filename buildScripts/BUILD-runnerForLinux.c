@@ -3,18 +3,18 @@
 int main(void) {
     // static linking
     system(
-        "g++ main.c++ -o executables/main "
+        "g++ ../main.c++ -o ../executables/main "
         "-lssl -lcrypto"
     );
     // "-static "
 
     system(
-        "g++ clientJustForTest.c++ -o executables/client "
+        "g++ ../clientJustForTest.c++ -o ../executables/client "
         "-lssl -lcrypto"
     );
     // "-static "
 
-    system("./executables/main");
+    system("../executables/main");
 
     return 0;
 }
