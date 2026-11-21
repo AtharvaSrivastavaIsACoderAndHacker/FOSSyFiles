@@ -196,6 +196,7 @@ bool multicastReceiveDevicesDetailsInLAN(){
         inet_ntop(AF_INET, &senderAddr.sin_addr, senderIp, INET_ADDRSTRLEN);
         if (bytesReceived == sizeof(MulticastedInfo)){
             MulticastedInfo* receivedDeviceInfo = reinterpret_cast<MulticastedInfo*>(&buffer);
+            // cout<<receivedDeviceInfo->magic << receivedDeviceInfo->name<<endl;
             if (strncmp(receivedDeviceInfo->magic,"_____multicastInfoDatagram_____fossyfiles_____",128) == 0){
                 DiscoveredDeviceInfo newDevice{};
                 newDevice.ip = receivedDeviceInfo->ip;

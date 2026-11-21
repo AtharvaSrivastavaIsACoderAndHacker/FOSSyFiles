@@ -9,13 +9,14 @@ int main(int argc, char const *argv[]){
 
     // call broadcaster and receiver
     // call gui
+    multicastTheIdentityInLAN("Uchiha", 12000);
 
 
-    listenFinal(KEYS.publicKey, 12000);
+    // listenFinal(KEYS.publicKey, 12000);
 
 
-    std::string path = "sample/minecraft.png";
-    fragmentEncryptAndSendAFile(path, CLIENT.clientSocket, CLIENTFULL, calculate_file_sha256(path));    
+    // std::string path = "sample/minecraft.png";
+    // fragmentEncryptAndSendAFile(path, CLIENT.clientSocket, CLIENTFULL, calculate_file_sha256(path));    
 
 
     windowsWSAInitNClean(0); // clear

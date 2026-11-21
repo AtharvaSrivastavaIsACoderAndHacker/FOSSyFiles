@@ -8,24 +8,30 @@ int main(int argc, char const *argv[]){
     
     windowsWSAInitNClean(0); // init
 
-    string server_ip;
-    cin>>server_ip;
-    int port = 12000;
+    multicastReceiveDevicesDetailsInLAN();
+    for (int i = 0; i < discoveredDevices.size(); i++){
+        cout<<discoveredDevices[i].name<<endl;
+    }
     
-    connectTo(server_ip, port, 12001, KEYS.publicKey, 12002);
 
-    cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
+    // string server_ip;
+    // cin>>server_ip;
+    // int port = 12000;
+    
+    // connectTo(server_ip, port, 12001, KEYS.publicKey, 12002);
+
+    // cout<<"Server Info --> "<<inet_ntoa(peerWhoReceived.peerAddr.sin_addr)<<":"<<ntohs(peerWhoReceived.peerAddr.sin_port)<<endl;
 
 
-    auto start = std::chrono::steady_clock::now();
-    bool success = defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, std::string("Received")+slash);
-    auto end = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    if(success){
-        std::ofstream out("textFiles/logs.txt", std::ios::app);
-        std::string log = receivedFile.fileName+" "+std::to_string(receivedFile.fileSizeInBytes)+" "+std::to_string(receivedFile.chunkSizeInBytes)+" "+std::to_string(receivedFile.totalChunks)+" "+std::to_string(duration.count())+"  \n";
-        out.write(log.data(), log.size());
-    }    
+    // auto start = std::chrono::steady_clock::now();
+    // bool success = defragmentDecryptAndReceiveAFile(peerWhoReceived.peerSocket,peerWhoReceived,12002, std::string("Received")+slash);
+    // auto end = std::chrono::steady_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    // if(success){
+    //     std::ofstream out("textFiles/logs.txt", std::ios::app);
+    //     std::string log = receivedFile.fileName+" "+std::to_string(receivedFile.fileSizeInBytes)+" "+std::to_string(receivedFile.chunkSizeInBytes)+" "+std::to_string(receivedFile.totalChunks)+" "+std::to_string(duration.count())+"  \n";
+    //     out.write(log.data(), log.size());
+    // }    
     
     windowsWSAInitNClean(1); // clear
     
