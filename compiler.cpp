@@ -18,6 +18,9 @@ int main(int argc, char *argv[]) {
         system(
             ("git add -A; git commit -m \"" + std::string(argv[2]) + "\"").c_str()
         );
+        system(
+            "git push origin main"
+        );
     }
 
     system(
