@@ -61,13 +61,13 @@ bool multicastTheIdentityInLAN(std::string name, int port){
 
     std::string selfIP = get_local_lan_ip();
     MulticastedInfo multicastPacket{};
-    multicastPacket.ip = selfIP;
+    strcpy(multicastPacket.ip, selfIP.c_str());
+    strcpy(multicastPacket.name, name.c_str());
     multicastPacket.port = port;
-    multicastPacket.name = name;
     strcpy(multicastPacket.magic, "_____multicastInfoDatagram_____fossyfiles_____");
 
     if (selfIP == ""){
-        std::cerr << "[broadcasterNCollector.h][multicastTheIdentityInLAN()] Failed to find any usable UDP IP Interfaces.\n";
+        std::cerr << "[broadcasterNCollector.h][multicastTheIdentityInLAN()][" + getCurrentTime() + "] Failed to find any usable UDP IP Interfaces.\n";
         return 1;
     }
 
@@ -77,7 +77,7 @@ bool multicastTheIdentityInLAN(std::string name, int port){
     // SETUP SOCKET
     socket_t multicastSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (multicastSocket == INVALID_SOCKET) {
-        std::cerr << "[broadcasterNCollector.h][multicastTheIdentityInLAN()] Failed to create Multicast Broadcaster Socket.\n";
+        std::cerr << "[broadcasterNCollector.h][multicastTheIdentityInLAN()][" + getCurrentTime() + "] Failed to create Multicast Broadcaster Socket.\n";
         return 1;
     }
 
@@ -88,7 +88,7 @@ bool multicastTheIdentityInLAN(std::string name, int port){
                             // will change this to 0 later but right now its needed for TESTING AND DEBUGGING  on the same device loopback
     setsockopt(multicastSocket, IPPROTO_IP, IP_MULTICAST_TTL, reinterpret_cast<const char*>(&ttl), sizeof(ttl));
     setsockopt(multicastSocket, IPPROTO_IP, IP_MULTICAST_LOOP, reinterpret_cast<const char*>(&loop), sizeof(loop));
-    cout<<"[broadcasterNCollector.h][multicastTheIdentityInLAN()] Warning: multicast loopback to same device is enabled (set to 1) for beta testing purposes -- turn it off for production "<<endl;
+    cout<<"[broadcasterNCollector.h][multicastTheIdentityInLAN()][" + getCurrentTime() + "] Warning: multicast loopback to same device is enabled (set to 1) for beta testing purposes -- turn it off for production "<<endl;
 
 
 
@@ -105,10 +105,10 @@ bool multicastTheIdentityInLAN(std::string name, int port){
         int bytesSent = sendto(multicastSocket, reinterpret_cast<char *>(&multicastPacket), static_cast<int>(sizeof(multicastPacket)), 0,
         reinterpret_cast<sockaddr*>(&multicastAddr), sizeof(multicastAddr));
         if (bytesSent == SOCKET_ERROR) {
-            std::cerr << "[broadcasterNCollector.h][multicastTheIdentityInLAN()] sendto failed.\n";
+            std::cerr << "[broadcasterNCollector.h][multicastTheIdentityInLAN()][" + getCurrentTime() + "] sendto failed.\n";
         }
         else {
-            std::cout << "[broadcasterNCollector.h][multicastTheIdentityInLAN()] Sent " << bytesSent << " bytes to " << MULTICAST_IP << ":" << MULTICAST_PORT << "\n";
+            // std::cout << "[broadcasterNCollector.h][multicastTheIdentityInLAN()] Sent " << bytesSent << " bytes to " << MULTICAST_IP << ":" << MULTICAST_PORT << "\n";
         }
 
 
@@ -138,14 +138,14 @@ bool multicastReceiveDevicesDetailsInLAN(){
     // SETUP SOCKET
     socket_t multicastSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (multicastSocket == INVALID_SOCKET) {
-        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()] Failed to create Multicast Socket.\n";
+        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][" + getCurrentTime() + "] Failed to create Multicast Socket.\n";
         return 1;
     }
 
     // set options to make it reusable and not hog it to just itself. this allows multiple isntances fo the program to subscribe to this multicast
     int reuse = 1;
     if (setsockopt(multicastSocket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&reuse), sizeof(reuse)) == SOCKET_ERROR) {
-        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()] setsockopt(SO_REUSEADDR) failed.\n";
+        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][" + getCurrentTime() + "] setsockopt(SO_REUSEADDR) failed.\n";
         closesocket(multicastSocket);
         return 1;
     }
@@ -157,7 +157,7 @@ bool multicastReceiveDevicesDetailsInLAN(){
     localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(multicastSocket, reinterpret_cast<sockaddr*>(&localAddr), sizeof(localAddr)) == SOCKET_ERROR) {
-        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()] Bind failed.\n";
+        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][" + getCurrentTime() + "] Bind failed.\n";
         closesocket(multicastSocket);
         return 1;
     }
@@ -168,12 +168,12 @@ bool multicastReceiveDevicesDetailsInLAN(){
     inet_pton(AF_INET, MULTICAST_IP.c_str(), &mreq.imr_multiaddr);
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     if (setsockopt(multicastSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, reinterpret_cast<const char*>(&mreq), sizeof(mreq)) == SOCKET_ERROR) {
-        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()] setsockopt(IP_ADD_MEMBERSHIP) failed.\n";
+        std::cerr << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][" + getCurrentTime() + "] setsockopt(IP_ADD_MEMBERSHIP) failed.\n";
         closesocket(multicastSocket);
         return 1;
     }
 
-    std::cout << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()] Subscribed to FOSSyFiles Multicast " << MULTICAST_IP << ":" << MULTICAST_PORT << " !\n";
+    std::cout << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][" + getCurrentTime() + "] Subscribed to FOSSyFiles Multicast " << MULTICAST_IP << ":" << MULTICAST_PORT << " !\n";
 
 
 
@@ -196,7 +196,6 @@ bool multicastReceiveDevicesDetailsInLAN(){
         inet_ntop(AF_INET, &senderAddr.sin_addr, senderIp, INET_ADDRSTRLEN);
         if (bytesReceived == sizeof(MulticastedInfo)){
             MulticastedInfo* receivedDeviceInfo = reinterpret_cast<MulticastedInfo*>(&buffer);
-            // cout<<receivedDeviceInfo->magic << receivedDeviceInfo->name<<endl;
             if (strncmp(receivedDeviceInfo->magic,"_____multicastInfoDatagram_____fossyfiles_____",128) == 0){
                 DiscoveredDeviceInfo newDevice{};
                 newDevice.ip = receivedDeviceInfo->ip;
@@ -219,6 +218,7 @@ bool multicastReceiveDevicesDetailsInLAN(){
 
                     // update discovery list
                     discoveredDevices.push_back(newDevice);
+                    // std::cout<<newDevice.ip<<newDevice.name<<std::endl;
                 }
                 
             }
@@ -242,7 +242,7 @@ bool multicastReceiveDevicesDetailsInLAN(){
 
     // UNSUBSCRIBE AND CLOSE
     setsockopt(multicastSocket, IPPROTO_IP, IP_DROP_MEMBERSHIP, reinterpret_cast<const char*>(&mreq), sizeof(mreq));
-    std::cout << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()] Unsubscribed from FOSSyFiles Multicast " << MULTICAST_IP << ":" << MULTICAST_PORT << " !\n";
+    std::cout << "[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][" + getCurrentTime() + "] Unsubscribed from FOSSyFiles Multicast " << MULTICAST_IP << ":" << MULTICAST_PORT << " !\n";
     closesocket(multicastSocket);
     windowsWSAInitNClean(1);
     return 0;

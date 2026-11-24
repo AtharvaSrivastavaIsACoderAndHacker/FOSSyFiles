@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <ctime>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -46,7 +47,7 @@
 struct KnockPacket {
     char magic[128];
     uint16_t tcpReturn;
-    std::string publicKey;
+    char publicKey[256];
     uint32_t publicKeyLen;
     uint16_t filePort;
     int latencyOfConnection;
@@ -93,12 +94,13 @@ struct DiscoveredDeviceInfo {
 
 #pragma pack(push, 1)
 struct MulticastedInfo {
-    std::string ip;
-    std::string name;
+    char name[64];
+    char ip[46]; 
     uint16_t port;
     char magic[128];
 };
 #pragma pack(pop)
+static_assert(sizeof(MulticastedInfo) == 46 + 128 + 2 + 64, "Struct size mismatch!");
 
 
 // Shared Functions ---------------------------------------------------------------------------------------------------------
@@ -121,6 +123,17 @@ inline void windowsWSAInitNClean(int mode){
         #endif
         
     }
+}
+
+inline std::string getCurrentTime() {
+    std::time_t now = std::time(nullptr);
+    std::tm* localTime = std::localtime(&now);
+    
+    char buffer[80];
+    // Format: 2026-11-24 08:24:00
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localTime);
+    
+    return std::string(buffer);
 }
 
 

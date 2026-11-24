@@ -3,7 +3,7 @@
 int main(void) {
     // static linking
     system(
-        "x86_64-w64-mingw32-g++ ../main.c++ -o ../executables/main.exe "
+        "x86_64-w64-mingw32-g++ main.c++ -o executables/main.exe "
         "-L/usr/x86_64-w64-mingw32/lib64 "
         "-static -static-libgcc -static-libstdc++ "
         "-Wl,--whole-archive -lssl -lcrypto -Wl,--no-whole-archive "
@@ -11,7 +11,7 @@ int main(void) {
     );
 
     system(
-        "x86_64-w64-mingw32-g++ ../clientJustForTest.c++ -o ../executables/client.exe "
+        "x86_64-w64-mingw32-g++ clientJustForTest.c++ -o executables/client.exe "
         "-L/usr/x86_64-w64-mingw32/lib64 "
         "-static -static-libgcc -static-libstdc++ "
         "-Wl,--whole-archive -lssl -lcrypto -Wl,--no-whole-archive "

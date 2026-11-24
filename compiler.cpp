@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     // compile the project compiling scripts; and then run the compilers --> the compilers will compile the project and then run the main thread !
     system(
         "g++ buildScripts/BUILD-compilerToCompileExesForWindowsOnLinux.cpp -o buildScripts/BUILD-compilerToCompileExesForWindowsOnLinux;"
-        "cd buildScripts; ./BUILD-compilerToCompileExesForWindowsOnLinux; cd ../"
+        "./buildScripts/BUILD-compilerToCompileExesForWindowsOnLinux;"
     );
 
     system(
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     }
 
     system(
-        "cd buildScripts; ./BUILD-runnerForLinux; cd ../"
+        "./buildScripts/BUILD-runnerForLinux;"
     );
 
     return 0;

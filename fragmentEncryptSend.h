@@ -91,10 +91,10 @@ bool sendAll(socket_t sock, const void* data, size_t len){
 void fragmentEncryptAndSendAFile(const std::string& file_path, socket_t receiverSOCKET, ConnectionFinal CLIENT, std::string fileSHA256Checksum) {
     
     windowsWSAInitNClean(0);
- 
+    
     std::ifstream in(file_path, std::ios::binary | std::ios::ate);
     if (!in) {
-        std::cerr << "[fragmentEncryptSend.h] Cannot open file " << file_path << " for reading.\n";
+        std::cerr << "[fragmentEncryptSend.h] Cannot open file " << file_path << " for reading --> "<<std::strerror(errno)<<std::endl;
         return;
     }
 
