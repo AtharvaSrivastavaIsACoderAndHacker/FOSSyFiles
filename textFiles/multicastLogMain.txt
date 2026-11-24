@@ -1,0 +1,5 @@
+[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][2026-11-24 08:41:39] Subscribed to FOSSyFiles Multicast 239.255.0.1:30001 !
+0 and 0
+[broadcasterNCollector.h][multicastReceiveDevicesDetailsInLAN()][2026-11-24 08:41:39] Subscribed to FOSSyFiles Multicast 239.255.0.1:30001 !
+0 and 0
+[broadcasterNCollector.h][multicastTheIdentityInLAN()][2026-11-24 08:41:39] Warning: multicast loopback to same device is enabled (set to 1) for beta testing purposes -- turn it off for production 
